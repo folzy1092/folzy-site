@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folzy Bio - "New Era"</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            background: #050505;
+            color: #ffffff;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .snow-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            overflow: hidden;
+        }
+
+        .snowflake {
+            position: absolute;
+            top: -10vh;
+            color: #fff;
+            font-size: 1em;
+            font-family: Arial, sans-serif;
+            text-shadow: 0 0 5px #000;
+            animation-name: snowflakes-fall, snowflakes-shake;
+            animation-timing-function: linear, ease-in-out;
+            animation-iteration-count: infinite, infinite;
+            opacity: 0;
+        }
+
+        @keyframes snowflakes-fall {
+            0% { top: -10vh; opacity: 0; }
+            10% { opacity: 0.7; }
+            100% { top: 110vh; opacity: 0.2; }
+        }
+
+        @keyframes snowflakes-shake {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(80px); }
+        }
+        .rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .rain-background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px) grayscale(95%) brightness(0.4) contrast(1.1);
+            background-color: #1a1a1a;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+        }
+
+        #rain-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            filter: blur(0.5px);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .tech-icons {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .tech-icon {
+            position: absolute;
+            width: 175px;
+            height: 175px;
+            opacity: 0.79;
+            pointer-events: auto;
+            animation: float-icon 8s ease-in-out infinite;
+            transition: z-index 0s;
+        }
+
+        .tech-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: grayscale(100%) brightness(1.2);
+            transform: rotate(var(--rot, 0deg));
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        .tech-icon:hover {
+            z-index: 100;
+        }
+
+        .tech-icon:hover img {
+            transform: rotate(var(--rot, 0deg)) scale(1.2);
+            filter: grayscale(0%) brightness(1.1) drop-shadow(0 0 15px rgba(255,255,255,0.2));
+        }
+
+        @keyframes float-icon {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .icon-1 { top: 10%; left: 5%;  --rot: -25deg; animation-delay: 0s; }
+        .icon-2 { top: 15%; right: 8%; --rot: 30deg;  animation-delay: 2s; }
+        .icon-3 { bottom: 16%; left: 8%; --rot: -15deg; animation-delay: 1s; }
+        .icon-4 { bottom: 15%; right: 5%; --rot: 45deg;  animation-delay: 3s; }
+        .icon-5 { top: 40%; right: 10%; --rot: 15deg;  animation-delay: 1.5s; }
+        .icon-6 { bottom: 45%; left: 9%; --rot: -35deg; animation-delay: 2.5s; }
+
+        @media (max-width: 1024px) {
+            .tech-icon {
+                width: 120px;
+                height: 120px;
+                opacity: 0.5;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            pointer-events: none;
+        }
+
+        .card-common {
+            background: rgba(30, 30, 30, 0.4);
+            backdrop-filter: blur(25px) saturate(100%);
+            -webkit-backdrop-filter: blur(25px) saturate(100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 40px;
+            padding: 50px 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow:
+                0 40px 80px -20px rgba(0, 0, 0, 0.8),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+            pointer-events: auto;
+            position: absolute;
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @media (max-width: 1024px) {
+            .card-common {
+                padding: 40px 30px;
+                max-width: 500px;
+                width: auto;
+                margin: 0 auto;
+            }
+        }
+
+        .card-active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        .card-hidden {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .logo {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        .logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 12px;
+            padding: 8px;
+        }
+
+        .logo.loading img {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            filter: drop-shadow(0 2px 10px rgba(255,255,255,0.1));
+        }
+
+        @media (max-width: 1024px) {
+            .title {
+                font-size: 2rem;
+            }
+        }
+
+        .code {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        .visitor-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 100;
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .visitor-counter:hover {
+            transform: translateY(-2px);
+        }
+
+        .counter-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .counter-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .counter-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .counter-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .counter-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            font-family: 'SF Mono', monospace;
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .counter-value.animate {
+            animation: countUp 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .visitor-counter {
+                top: 20px;
+                right: 20px;
+                padding: 12px 18px;
+                gap: 10px;
+            }
+
+            .counter-icon svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .counter-label {
+                font-size: 0.6rem;
+            }
+
+            .counter-value {
+                font-size: 1.2rem;
+            }
+        }
+
+        .music-player {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .music-player:hover {
+            transform: translateY(-2px);
+        }
+
+        .music-player.minimized {
+            width: 60px;
+            height: 60px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .music-player.minimized .player-content {
+            display: none;
+        }
+
+        .music-player.minimized .minimize-icon {
+            display: block !important;
+            font-size: 1.5rem;
+        }
+
+        .minimize-icon {
+            display: none;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .player-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .player-title-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .minimize-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.3s ease;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .minimize-btn:hover {
+            color: rgba(255, 255, 255, 0.9);
+            transform: scale(1.1);
+        }
+
+        .minimize-btn svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .track-info {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .track-name {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .track-artist {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+
+        .progress-container {
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.9));
+            border-radius: 3px;
+            transition: width 0.1s linear;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .progress-bar:hover .progress-fill::after {
+            opacity: 1;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .player-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+
+        .control-btn.play-btn {
+            width: 55px;
+            height: 55px;
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn.play-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .volume-icon {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .volume-icon:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .music-player {
+                display: none;
+            }
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .buttons-grid.donate-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .span-2 {
+            grid-column: span 2;
+        }
+
+        .btn {
+            position: relative;
+            padding: 18px 24px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            color: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .btn span {
+            font-size: 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.85);
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .btn span svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn:hover::after { opacity: 1; }
+        .btn:hover span { transform: scale(1.1); color: #ffffff; }
+        .btn:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.05); }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            padding: 25px 20px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-item { display: flex; flex-direction: column; gap: 6px; }
+        .stat-number { font-size: 1.5rem; font-weight: 700; color: #ffffff; text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+        .stat-label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            color: #00ff88;
+        }
+
+        .toast.error {
+            background: rgba(255, 50, 50, 0.2);
+            border-color: rgba(255, 100, 100, 0.3);
+        }
+
+        .toast.error .toast-icon {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                overflow: auto;
+                min-height: initial;
+                min-width: initial;
+                height: auto;
+            }
+
+            .container {
+                height: auto;
+                min-height: 100vh;
+                justify-content: flex-start;
+                padding: 5vh 0;
+                position: static;
+                display: block;
+            }
+
+            .card-common {
+                width: 90vw;
+                max-width: 420px;
+                margin: 0 auto;
+                padding: 30px 20px;
+                position: static;
+                transform: none;
+                opacity: 1;
+                display: block;
+            }
+
+            #main-card.card-hidden, #donate-card.card-hidden {
+                display: none;
+            }
+
+            #main-card.card-active, #donate-card.card-active {
+                display: block;
+            }
+
+            .tech-icon {
+                width: 90px;
+                height: 90px;
+                opacity: 0.35;
+            }
+
+            .icon-1 { top: 10%; left: -2%; }
+            .icon-2 { top: 15%; right: -5%; }
+            .icon-3 { bottom: 12%; left: -4%; }
+            .icon-4 { bottom: 15%; right: 9%; }
+            .icon-5 { top: 40%; right: -8%; }
+            .icon-6 { bottom: 45%; left: -6%; }
+
+            .title {
+                font-size: 1.9rem;
+            }
+
+            .logo {
+                width: 88px;
+                height: 88px;
+            }
+
+            .logo img {
+                width: 72px;
+                height: 72px;
+            }
+
+            .buttons-grid {
+                gap: 12px;
+                margin-bottom: 30px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .buttons-grid {
+                grid-template-columns: 1fr;
+            }
+            .span-2 {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="rain-container">
+        <div class="rain-background" id="rain-background"></div>
+        <canvas id="rain-canvas"></canvas>
+    </div>
+    <div class="snow-container" id="snow-container"></div>
+    <div class="overlay"></div>
+
+    <div class="visitor-counter">
+        <span class="counter-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg>
+        </span>
+        <div class="counter-content">
+            <div class="counter-label">Посетителей</div>
+            <div class="counter-value" id="visitor-count">0</div>
+        </div>
+    </div>
+
+    <div class="music-player minimized" id="music-player">
+        <svg class="minimize-icon" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+        <div class="player-content">
+            <div class="player-header">
+                <div class="player-title">
+                    <svg class="player-title-icon" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                    <span>Music Player</span>
+                </div>
+                <button class="minimize-btn" onclick="toggleMinimize()">
+                    <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)">
+                        <path d="M19 13H5v-2h14v2z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="track-info">
+                <div class="track-name" id="track-name">red lipstick + 2 lines</div>
+                <div class="track-artist" id="track-artist">Овсянкин</div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar" onclick="seekAudio(event)">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="time-display">
+                    <span id="current-time">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <div class="player-controls">
+                <button class="control-btn" onclick="skipBackward()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/>
+                    </svg>
+                </button>
+                <button class="control-btn play-btn" id="play-btn" onclick="togglePlay()">
+                    <svg id="play-icon" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+                <button class="control-btn" onclick="skipForward()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="volume-container">
+                <span class="volume-icon" id="volume-icon" onclick="toggleMute()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                </span>
+                <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="70" oninput="changeVolume(this.value)">
+            </div>
+        </div>
+    </div>
+
+    <audio id="background-audio" preload="metadata" autoplay>
+        <source src="/static/track.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="tech-icons">
+        <div class="tech-icon icon-1"><img src="/static/python.png" alt="Python"></div>
+        <div class="tech-icon icon-2"><img src="/static/c.png" alt="C"></div>
+        <div class="tech-icon icon-3"><img src="/static/javascript.png" alt="JavaScript"></div>
+        <div class="tech-icon icon-4"><img src="/static/html.png" alt="HTML"></div>
+        <div class="tech-icon icon-5"><img src="/static/css.png" alt="CSS"></div>
+        <a href="https://t.me/folzybio_new" target="_blank" class="tech-icon icon-6"><img src="/static/tg.png" alt="Telegram"></a>
+    </div>
+
+    <div class="container">
+
+        <div id="main-card" class="card-common card-active">
+            <div class="bio-card-content">
+                <div class="logo loading" id="main-logo">
+                    <img src="/static/bmw.gif" alt="Folzy Logo">
+                </div>
+
+                <h1 class="title">
+                    <a href="https://t.me/m/05phhbDkYmQy" style="text-decoration: none; color: inherit;">Folzy</a>
+                </h1>
+                <div class="code">System.out.println("Hello");</div>
+                <p class="subtitle">Developer • Creator • Visionary</p>
+
+                <div class="buttons-grid" id="main-buttons-container">
+                    <!-- Buttons are rendered from siteSettings -->
+                </div>
+
+                <div style="margin-top: 15px; width: 100%;">
+                    <button onclick="switchCard('donate')" class="btn span-2" style="width: 100%;"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>Donate</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item"><span class="stat-number">100+</span><span class="stat-label">Project's</span></div>
+                    <div class="stat-item"><span class="stat-number">7</span><span class="stat-label">Client's</span></div>
+                    <div class="stat-item"><span class="stat-number">4.6</span><span class="stat-label">Rating ★</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="donate-card" class="card-common card-hidden">
+            <div class="bio-card-content">
+                <div class="logo loading" id="donate-logo">
+                    <img src="/static/bmw.gif" alt="Folzy Logo">
+                </div>
+
+                <h1 class="title">Donate</h1>
+                <p class="subtitle">Support the Creator</p>
+
+                <div class="buttons-grid donate-grid">
+                    <a href="https://www.donationalerts.com/r/folzy" class="btn span-2" target="_blank">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h15v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="5"/><line x1="10" y1="2" x2="10" y2="5"/><line x1="14" y1="2" x2="14" y2="5"/></svg></span> DonationAlerts
+                    </a>
+
+                    <button onclick="copyCrypto('TRC20')" class="btn">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7 8.5h10M12 8.5V16"/></svg></span> USDT (TRC20)
+                    </button>
+
+                    <button onclick="copyCrypto('TON')" class="btn">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18M15 3l-3 18"/></svg></span> TON
+                    </button>
+
+                    <a href="https://t.me/FolzyManagebot" class="btn span-2" target="_blank">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Telegram Stars
+                    </a>
+
+                    <button onclick="switchCard('main')" class="btn span-2" style="margin-top: 10px; background: rgba(255,255,255,0.05);">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span> Назад
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast" class="toast">
+    </div>
+
+    <script>
+    // Единый набор line-иконок (stroke=currentColor, в одном стиле со счётчиком).
+    const _svg = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+    const ICON_SVG = {
+        '💬': _svg('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'),
+        '📱': _svg('<path d="M3 11l18-5v12L3 14z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'),
+        '⚙️': _svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
+        '🎨': _svg('<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c.93 0 1.5-.75 1.5-1.5 0-.4-.16-.77-.42-1.05-.27-.28-.42-.62-.42-1.02 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6 0-4.96-4.48-8.93-10-8.93z"/>'),
+    };
+
+    // Статичная копия настроек сайта (было в БД админки, бэкенд убран).
+    const siteSettings = {
+        music: { enabled: true, autoplay: true, show_player: false, track_name: "red lipstick + 2 lines", artist: "Овсянкин", url: "/static/track.mp3" },
+        rain: { enabled: true, count: 186 },
+        snow: { enabled: false, count: 100 },
+        background_url: "/static/photo_4.jpg",
+        buttons: [
+            { title: "Spamblock", url: "https://t.me/Folzy_questions_bot", icon: "💬" },
+            { title: "Channel", url: "https://t.me/+O8RIiGEYX400Yjky", icon: "📱" },
+            { title: "FolzySofts", url: "https://t.me/Folzy_soft", icon: "⚙️" },
+            { title: "Project's", url: "https://t.me/Folzyworks", icon: "🎨" }
+        ]
+    };
+
+    const FROZEN_VISITOR_COUNT = 276;
+
+    function applySettings() {
+        const audio = document.getElementById('background-audio');
+        const musicPlayer = document.getElementById('music-player');
+
+        if (!siteSettings.music.show_player) {
+            musicPlayer.style.display = 'none';
+        } else {
+            musicPlayer.style.display = 'flex';
+        }
+
+        if (!siteSettings.music.enabled) {
+            audio.pause();
+            audio.muted = true;
+        } else {
+            audio.muted = false;
+            if (siteSettings.music.url && audio.src !== siteSettings.music.url) {
+                audio.src = siteSettings.music.url;
+            }
+            if (audio.paused && siteSettings.music.autoplay) {
+                 const playPromise = audio.play();
+                 if (playPromise !== undefined) {
+                    playPromise.catch(error => { console.log('Autoplay prevented'); });
+                }
+            }
+        }
+
+        if (siteSettings.music.track_name) document.getElementById('track-name').textContent = siteSettings.music.track_name;
+        if (siteSettings.music.artist) document.getElementById('track-artist').textContent = siteSettings.music.artist;
+
+        if (siteSettings.background_url) {
+            const rainBg = document.getElementById('rain-background');
+            if (rainBg) {
+                rainBg.style.backgroundImage = `url('${siteSettings.background_url}')`;
+            }
+        }
+
+        const btnContainer = document.getElementById('main-buttons-container');
+        if (btnContainer && siteSettings.buttons) {
+            btnContainer.innerHTML = '';
+            siteSettings.buttons.forEach(btn => {
+                const a = document.createElement('a');
+                a.href = btn.url;
+                a.className = 'btn';
+                a.target = '_blank';
+                const icon = document.createElement('span');
+                const svg = ICON_SVG[(btn.icon || '').trim()];
+                if (svg) {
+                    icon.innerHTML = svg;
+                } else {
+                    icon.textContent = btn.icon || '';
+                }
+                a.appendChild(icon);
+                a.appendChild(document.createTextNode(btn.title || ''));
+                btnContainer.appendChild(a);
+            });
+        }
+        updateSnowflakes();
+        updateRaindrops();
+    }
+
+    function updateSnowflakes() {
+        const container = document.getElementById('snow-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (!siteSettings.snow.enabled) return;
+
+        const flakesCount = siteSettings.snow.count;
+
+        for (let i = 0; i < flakesCount; i++) {
+            const flake = document.createElement('div');
+            flake.classList.add('snowflake');
+            flake.innerHTML = '❄';
+
+            flake.style.left = Math.random() * 100 + 'vw';
+
+            const duration = Math.random() * 8 + 7 + 's';
+            const delay = -(Math.random() * 15) + 's';
+
+            flake.style.animationDuration = `${duration}, 3s`;
+            flake.style.animationDelay = `${delay}, ${delay}`;
+
+            flake.style.fontSize = Math.random() * 12 + 10 + 'px';
+            flake.style.opacity = Math.random() * 0.4 + 0.1;
+
+            container.appendChild(flake);
+        }
+    }
+
+    // Canvas Rain System
+    let rainCanvas, rainCtx;
+    let raindrops = [];
+    let rainAnimationId = null;
+
+    function initRainCanvas() {
+        rainCanvas = document.getElementById('rain-canvas');
+        rainCtx = rainCanvas.getContext('2d', { alpha: true });
+        resizeRainCanvas();
+        window.addEventListener('resize', resizeRainCanvas);
+    }
+
+    function resizeRainCanvas() {
+        rainCanvas.width = window.innerWidth;
+        rainCanvas.height = window.innerHeight;
+        updateRaindrops();
+    }
+
+    function updateRaindrops() {
+        raindrops = [];
+        const raindropsCount = siteSettings.rain.enabled ? siteSettings.rain.count : 0;
+
+        for (let i = 0; i < raindropsCount; i++) {
+            const width = 2 + Math.random() * 4;
+            const height = width * (2 + Math.random() * 3);
+            raindrops.push({
+                x: Math.random() * rainCanvas.width,
+                y: Math.random() * rainCanvas.height - rainCanvas.height,
+                width: width,
+                height: height,
+                speed: 8 + Math.random() * 6,
+                opacity: 0.4 + Math.random() * 0.4
+            });
+        }
+
+        if (raindropsCount > 0 && !rainAnimationId) {
+            animateRain();
+        } else if (raindropsCount === 0 && rainAnimationId) {
+            cancelAnimationFrame(rainAnimationId);
+            rainAnimationId = null;
+            rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+        }
+    }
+
+    function animateRain() {
+        rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+
+        for (let drop of raindrops) {
+            rainCtx.fillStyle = `rgba(200, 200, 200, ${drop.opacity * 0.3})`;
+            rainCtx.beginPath();
+            rainCtx.ellipse(drop.x, drop.y, drop.width / 2, drop.height / 2, Math.PI, 0, Math.PI * 2);
+            rainCtx.fill();
+
+            rainCtx.strokeStyle = `rgba(255, 255, 255, ${drop.opacity * 0.15})`;
+            rainCtx.lineWidth = 0.5;
+            rainCtx.beginPath();
+            rainCtx.ellipse(drop.x + 0.5, drop.y + 0.5, (drop.width - 1) / 2, (drop.height - 1) / 2, Math.PI, 0, Math.PI * 2);
+            rainCtx.stroke();
+
+            drop.y += drop.speed;
+
+            if (drop.y > rainCanvas.height + 50) {
+                drop.y = -50;
+                drop.x = Math.random() * rainCanvas.width;
+            }
+        }
+
+        rainAnimationId = requestAnimationFrame(animateRain);
+    }
+
+    function animateCounter(targetValue) {
+        const counterElement = document.getElementById('visitor-count');
+        const currentValue = parseInt(counterElement.textContent) || 0;
+        if (currentValue === targetValue) return;
+        const duration = 1000;
+        const steps = 30;
+        const increment = (targetValue - currentValue) / steps;
+        let step = 0;
+        counterElement.classList.add('animate');
+        const timer = setInterval(() => {
+            step++;
+            const newValue = Math.round(currentValue + (increment * step));
+            counterElement.textContent = newValue;
+            if (step >= steps) {
+                counterElement.textContent = targetValue;
+                clearInterval(timer);
+                setTimeout(() => counterElement.classList.remove('animate'), 500);
+            }
+        }, duration / steps);
+    }
+
+    function loadCounter() {
+        animateCounter(FROZEN_VISITOR_COUNT);
+    }
+
+    function loadLogoImage(logoId, logoSrc) {
+        const logoElement = document.getElementById(logoId);
+        const img = new Image();
+        img.onload = () => logoElement.classList.remove('loading');
+        img.onerror = () => logoElement.classList.remove('loading');
+        img.src = logoSrc;
+    }
+
+    function loadTechIcons() {
+        const icons = document.querySelectorAll('.tech-icon img');
+        const iconSrcs = [
+            '/static/python.png',
+            '/static/c.png',
+            '/static/javascript.png',
+            '/static/html.png',
+            '/static/css.png',
+            '/static/tg.png'
+        ];
+        icons.forEach((iconImg, index) => {
+            const img = new Image();
+            img.src = iconSrcs[index];
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initRainCanvas();
+        applySettings();
+        loadLogoImage('main-logo', '/static/bmw.gif');
+        loadLogoImage('donate-logo', '/static/bmw.gif');
+        loadTechIcons();
+        loadCounter();
+    });
+
+    function switchCard(view) {
+        const mainCard = document.getElementById('main-card');
+        const donateCard = document.getElementById('donate-card');
+
+        if (window.innerWidth <= 768) {
+            if (view === 'donate') {
+                mainCard.classList.remove('card-active');
+                mainCard.classList.add('card-hidden');
+                donateCard.classList.remove('card-hidden');
+                donateCard.classList.add('card-active');
+            } else {
+                donateCard.classList.remove('card-active');
+                donateCard.classList.add('card-hidden');
+                mainCard.classList.remove('card-hidden');
+                mainCard.classList.add('card-active');
+            }
+            return;
+        }
+
+        if (view === 'donate') {
+            mainCard.classList.remove('card-active');
+            mainCard.classList.add('card-hidden');
+            setTimeout(() => {
+                donateCard.classList.remove('card-hidden');
+                donateCard.classList.add('card-active');
+            }, 100);
+        } else {
+            donateCard.classList.remove('card-active');
+            donateCard.classList.add('card-hidden');
+            setTimeout(() => {
+                mainCard.classList.remove('card-hidden');
+                mainCard.classList.add('card-active');
+            }, 100);
+        }
+    }
+
+    function copyCrypto(type) {
+        const addresses = { TRC20: "TEUiGjTqJmhSj7nEQEBtGF7h4J6ZTTKddr", TON: "UQCLhm1hTZT5mu0gUCQHLel6lZOzLFmd0BulsdkQie86kz-e" };
+        const labels = { TRC20: "USDT (TRC20)", TON: "TON" };
+        const addressToCopy = addresses[type];
+        const label = labels[type];
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(addressToCopy).then(() => showToast(label)).catch(err => fallbackCopyTextToClipboard(addressToCopy, label));
+        } else {
+            fallbackCopyTextToClipboard(addressToCopy, label);
+        }
+    }
+
+    function fallbackCopyTextToClipboard(text, label) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            if (document.execCommand('copy')) showToast(label);
+            else showToast('Ошибка копирования', true);
+        } catch (err) { showToast('Ошибка копирования', true); }
+        document.body.removeChild(textArea);
+    }
+
+    function showToast(label, isError = false) {
+        const toast = document.getElementById('toast');
+        if (toast) {
+            toast.innerHTML = (isError ? `<span class="toast-icon">⚠</span> ${label}` : `<span class="toast-icon">✓</span> Адрес ${label} скопирован`);
+            toast.className = 'toast show ' + (isError ? 'error' : '');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    }
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('dragstart', e => e.preventDefault());
+
+    const audio = document.getElementById('background-audio');
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const progressFill = document.getElementById('progress-fill');
+    const currentTimeDisplay = document.getElementById('current-time');
+    const durationDisplay = document.getElementById('duration');
+    const volumeSlider = document.getElementById('volume-slider');
+    const musicPlayer = document.getElementById('music-player');
+    const volumeIconEl = document.getElementById('volume-icon');
+
+    let isMinimized = true;
+    audio.volume = 0.7;
+
+    window.addEventListener('load', () => {
+        if (siteSettings.music.enabled && siteSettings.music.autoplay) {
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => updatePlayIcon(true))
+                .catch(error => {
+                    console.log('Autoplay prevented');
+                    document.body.addEventListener('click', function initAudio() {
+                        if(siteSettings.music.enabled) {
+                            audio.play();
+                            updatePlayIcon(true);
+                        }
+                        document.body.removeEventListener('click', initAudio);
+                    }, { once: true });
+                });
+            }
+        }
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        progressFill.style.width = progress + '%';
+        currentTimeDisplay.textContent = formatTime(audio.currentTime);
+    });
+
+    audio.addEventListener('loadedmetadata', () => durationDisplay.textContent = formatTime(audio.duration));
+    audio.addEventListener('ended', () => { audio.currentTime = 0; audio.play(); });
+
+    function updatePlayIcon(isPlaying) {
+        playIcon.innerHTML = isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    }
+
+    function togglePlay() {
+        if (audio.paused) { audio.play(); updatePlayIcon(true); }
+        else { audio.pause(); updatePlayIcon(false); }
+    }
+
+    function skipBackward() { audio.currentTime = Math.max(0, audio.currentTime - 10); }
+    function skipForward() { audio.currentTime = Math.min(audio.duration, audio.currentTime + 10); }
+
+    function seekAudio(event) {
+        const progressBar = document.getElementById('progress-bar');
+        const rect = progressBar.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        audio.currentTime = (clickX / rect.width) * audio.duration;
+    }
+
+    function changeVolume(value) { audio.volume = value / 100; updateVolumeIcon(); }
+
+    function toggleMute() {
+        if (audio.volume > 0) {
+            audio.dataset.previousVolume = audio.volume;
+            audio.volume = 0;
+            volumeSlider.value = 0;
+        } else {
+            const previousVolume = audio.dataset.previousVolume || 0.7;
+            audio.volume = previousVolume;
+            volumeSlider.value = previousVolume * 100;
+        }
+        updateVolumeIcon();
+    }
+
+    function updateVolumeIcon() {
+        const svg = volumeIconEl.querySelector('svg');
+        if (audio.volume === 0) svg.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+        else if (audio.volume < 0.3) svg.innerHTML = '<path d="M7 9v6h4l5 5V4l-5 5H7z"/>';
+        else if (audio.volume < 0.7) svg.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>';
+        else svg.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+    }
+
+    function toggleMinimize() {
+        isMinimized = !isMinimized;
+        musicPlayer.classList.toggle('minimized', isMinimized);
+    }
+
+    musicPlayer.addEventListener('click', (e) => {
+        if (isMinimized && !e.target.classList.contains('minimize-btn')) toggleMinimize();
+    });
+
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    </script>
+</body>
+</html>
