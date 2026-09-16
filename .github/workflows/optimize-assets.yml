@@ -1,0 +1,35 @@
+name: Build optimized image assets
+
+on:
+  push:
+    paths:
+      - '.github/workflows/optimize-assets.yml'
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install WebP tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq webp
+
+      - name: Convert PNG icons to WebP
+        run: |
+          mkdir -p optimized
+          for name in python c javascript html css tg; do
+            cwebp -quiet -q 85 -m 6 -resize 512 512 -metadata none "static/${name}.png" -o "optimized/${name}.webp"
+            test -s "optimized/${name}.webp"
+          done
+          ls -lh optimized
+
+      - name: Upload optimized images
+        uses: actions/upload-artifact@v4
+        with:
+          name: optimized-webp
+          path: optimized/*.webp
+          if-no-files-found: error
+          retention-days: 1
