@@ -1,12 +1,9 @@
-name: Apply optimized site assets
+name: Build optimized site bundle
 
 on:
   push:
     paths:
       - '.github/workflows/optimize-assets.yml'
-
-permissions:
-  contents: write
 
 jobs:
   optimize:
@@ -20,22 +17,22 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq webp
 
-      - name: Convert PNG icons to WebP
+      - name: Build optimized assets
         run: |
+          mkdir -p output/static
           for name in python c javascript html css tg; do
-            cwebp -quiet -q 85 -m 6 -resize 512 512 -metadata none "static/${name}.png" -o "static/${name}.webp"
-            test -s "static/${name}.webp"
-            rm "static/${name}.png"
+            cwebp -quiet -q 85 -m 6 -resize 512 512 -metadata none "static/${name}.png" -o "output/static/${name}.webp"
+            test -s "output/static/${name}.webp"
           done
-          ls -lh static/*.webp
 
-      - name: Patch site
+      - name: Build patched index
         shell: bash
         run: |
+          cp index.html output/index.html
           python3 - <<'PY'
           from pathlib import Path
 
-          p = Path('index.html')
+          p = Path('output/index.html')
           s = p.read_text(encoding='utf-8')
 
           for name in ('python', 'c', 'javascript', 'html', 'css', 'tg'):
@@ -117,9 +114,10 @@ jobs:
           p.write_text(s, encoding='utf-8')
           PY
 
-      - name: Commit optimized assets and site fixes
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Upload site bundle
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: Optimize images and fix audio start
-          commit_user_name: github-actions[bot]
-          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          name: optimized-site-bundle
+          path: output/
+          if-no-files-found: error
+          retention-days: 1
