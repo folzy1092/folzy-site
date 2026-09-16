@@ -919,12 +919,12 @@
                         <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                     </svg>
                 </span>
-                <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="70" oninput="changeVolume(this.value)">
+                <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="35" oninput="changeVolume(this.value)">
             </div>
         </div>
     </div>
 
-    <audio id="background-audio" preload="metadata" autoplay>
+    <audio id="background-audio" preload="metadata">
         <source src="/static/track.mp3" type="audio/mpeg">
     </audio>
 
@@ -949,7 +949,7 @@
                     <a href="https://t.me/m/05phhbDkYmQy" style="text-decoration: none; color: inherit;">Folzy</a>
                 </h1>
                 <div class="code">System.out.println("Hello");</div>
-                <p class="subtitle">Developer • Creator • Visionary</p>
+                <p class="subtitle">Developer • Telegram • iOS • Web</p>
 
                 <div class="buttons-grid" id="main-buttons-container">
                     <!-- Buttons are rendered from siteSettings -->
@@ -960,7 +960,7 @@
                 </div>
 
                 <div class="stats">
-                    <div class="stat-item"><span class="stat-number">100+</span><span class="stat-label">Project's</span></div>
+                    <div class="stat-item"><span class="stat-number">100+</span><span class="stat-label">Projects</span></div>
                     <div class="stat-item"><span class="stat-number">7</span><span class="stat-label">Client's</span></div>
                     <div class="stat-item"><span class="stat-number">4.6</span><span class="stat-label">Rating ★</span></div>
                 </div>
@@ -1018,7 +1018,7 @@
 
     // Статичная копия настроек сайта (было в БД админки, бэкенд убран).
     const siteSettings = {
-        music: { enabled: true, autoplay: true, show_player: false, track_name: "red lipstick + 2 lines", artist: "Овсянкин", url: "/static/track.mp3" },
+        music: { enabled: true, autoplay: true, show_player: false, volume: 0.35, fade_in_ms: 1000, track_name: "red lipstick + 2 lines", artist: "Овсянкин", url: "/static/track.mp3" },
         rain: { enabled: true, count: 186 },
         snow: { enabled: false, count: 100 },
         background_url: "/static/photo_4.jpg",
@@ -1026,7 +1026,7 @@
             { title: "Spamblock", url: "https://t.me/Folzy_questions_bot", icon: "💬" },
             { title: "Channel", url: "https://t.me/+O8RIiGEYX400Yjky", icon: "📱" },
             { title: "FolzySofts", url: "https://t.me/Folzy_soft", icon: "⚙️" },
-            { title: "Project's", url: "https://t.me/Folzyworks", icon: "🎨" },
+            { title: "Projects", url: "https://t.me/Folzyworks", icon: "🎨" },
             { title: "Portfolio", url: "https://folzy.is-a.dev", icon: "🗂" }
         ]
     };
@@ -1052,10 +1052,7 @@
                 audio.src = siteSettings.music.url;
             }
             if (audio.paused && siteSettings.music.autoplay) {
-                 const playPromise = audio.play();
-                 if (playPromise !== undefined) {
-                    playPromise.catch(error => { console.log('Autoplay prevented'); });
-                }
+                playWithFade().catch(error => { console.log('Autoplay prevented'); });
             }
         }
 
@@ -1337,24 +1334,61 @@
     const volumeIconEl = document.getElementById('volume-icon');
 
     let isMinimized = true;
-    audio.volume = 0.7;
+    let volumeFadeFrame = null;
+    const defaultVolume = Math.max(0, Math.min(1, siteSettings.music.volume ?? 0.35));
+    volumeSlider.value = Math.round(defaultVolume * 100);
+    audio.volume = 0;
+
+    function fadeAudioTo(targetVolume = defaultVolume, duration = siteSettings.music.fade_in_ms ?? 1000) {
+        if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
+        const target = Math.max(0, Math.min(1, targetVolume));
+        const startVolume = audio.volume;
+        const startTime = performance.now();
+
+        if (duration <= 0 || Math.abs(target - startVolume) < 0.001) {
+            audio.volume = target;
+            updateVolumeIcon();
+            return;
+        }
+
+        function step(now) {
+            const progress = Math.min(1, (now - startTime) / duration);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            audio.volume = startVolume + (target - startVolume) * eased;
+            updateVolumeIcon();
+            if (progress < 1) volumeFadeFrame = requestAnimationFrame(step);
+            else volumeFadeFrame = null;
+        }
+
+        volumeFadeFrame = requestAnimationFrame(step);
+    }
+
+    function playWithFade() {
+        audio.volume = 0;
+        updateVolumeIcon();
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            return playPromise.then(() => {
+                fadeAudioTo(defaultVolume);
+                updatePlayIcon(true);
+            });
+        }
+        fadeAudioTo(defaultVolume);
+        updatePlayIcon(true);
+        return Promise.resolve();
+    }
 
     window.addEventListener('load', () => {
-        if (siteSettings.music.enabled && siteSettings.music.autoplay) {
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => updatePlayIcon(true))
-                .catch(error => {
-                    console.log('Autoplay prevented');
-                    document.body.addEventListener('click', function initAudio() {
-                        if(siteSettings.music.enabled) {
-                            audio.play();
-                            updatePlayIcon(true);
-                        }
-                        document.body.removeEventListener('click', initAudio);
-                    }, { once: true });
-                });
-            }
+        if (siteSettings.music.enabled && siteSettings.music.autoplay && audio.paused) {
+            playWithFade().catch(error => {
+                console.log('Autoplay prevented');
+                document.body.addEventListener('click', function initAudio() {
+                    if (siteSettings.music.enabled) {
+                        playWithFade().catch(() => {});
+                    }
+                    document.body.removeEventListener('click', initAudio);
+                }, { once: true });
+            });
         }
     });
 
@@ -1372,8 +1406,14 @@
     }
 
     function togglePlay() {
-        if (audio.paused) { audio.play(); updatePlayIcon(true); }
-        else { audio.pause(); updatePlayIcon(false); }
+        if (audio.paused) {
+            playWithFade().catch(() => {});
+        } else {
+            if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
+            volumeFadeFrame = null;
+            audio.pause();
+            updatePlayIcon(false);
+        }
     }
 
     function skipBackward() { audio.currentTime = Math.max(0, audio.currentTime - 10); }
@@ -1386,15 +1426,22 @@
         audio.currentTime = (clickX / rect.width) * audio.duration;
     }
 
-    function changeVolume(value) { audio.volume = value / 100; updateVolumeIcon(); }
+    function changeVolume(value) {
+        if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
+        volumeFadeFrame = null;
+        audio.volume = value / 100;
+        updateVolumeIcon();
+    }
 
     function toggleMute() {
+        if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
+        volumeFadeFrame = null;
         if (audio.volume > 0) {
             audio.dataset.previousVolume = audio.volume;
             audio.volume = 0;
             volumeSlider.value = 0;
         } else {
-            const previousVolume = audio.dataset.previousVolume || 0.7;
+            const previousVolume = audio.dataset.previousVolume || defaultVolume;
             audio.volume = previousVolume;
             volumeSlider.value = previousVolume * 100;
         }
