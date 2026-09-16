@@ -929,12 +929,12 @@
     </audio>
 
     <div class="tech-icons">
-        <div class="tech-icon icon-1"><img src="/static/python.png" alt="Python"></div>
-        <div class="tech-icon icon-2"><img src="/static/c.png" alt="C"></div>
-        <div class="tech-icon icon-3"><img src="/static/javascript.png" alt="JavaScript"></div>
-        <div class="tech-icon icon-4"><img src="/static/html.png" alt="HTML"></div>
-        <div class="tech-icon icon-5"><img src="/static/css.png" alt="CSS"></div>
-        <a href="https://t.me/folzybio" target="_blank" class="tech-icon icon-6"><img src="/static/tg.png" alt="Telegram"></a>
+        <div class="tech-icon icon-1"><img src="/static/python.webp" alt="Python"></div>
+        <div class="tech-icon icon-2"><img src="/static/c.webp" alt="C"></div>
+        <div class="tech-icon icon-3"><img src="/static/javascript.webp" alt="JavaScript"></div>
+        <div class="tech-icon icon-4"><img src="/static/html.webp" alt="HTML"></div>
+        <div class="tech-icon icon-5"><img src="/static/css.webp" alt="CSS"></div>
+        <a href="https://t.me/folzybio" target="_blank" class="tech-icon icon-6"><img src="/static/tg.webp" alt="Telegram"></a>
     </div>
 
     <div class="container">
@@ -1031,7 +1031,7 @@
         ]
     };
 
-    const FROZEN_VISITOR_COUNT = 276;
+    const FROZEN_VISITOR_COUNT = 312;
 
     function applySettings() {
         const audio = document.getElementById('background-audio');
@@ -1048,11 +1048,9 @@
             audio.muted = true;
         } else {
             audio.muted = false;
-            if (siteSettings.music.url && audio.src !== siteSettings.music.url) {
-                audio.src = siteSettings.music.url;
-            }
-            if (audio.paused && siteSettings.music.autoplay) {
-                playWithFade().catch(error => { console.log('Autoplay prevented'); });
+            if (siteSettings.music.url) {
+                const configuredUrl = new URL(siteSettings.music.url, window.location.href).href;
+                if (audio.src !== configuredUrl) audio.src = configuredUrl;
             }
         }
 
@@ -1226,12 +1224,12 @@
     function loadTechIcons() {
         const icons = document.querySelectorAll('.tech-icon img');
         const iconSrcs = [
-            '/static/python.png',
-            '/static/c.png',
-            '/static/javascript.png',
-            '/static/html.png',
-            '/static/css.png',
-            '/static/tg.png'
+            '/static/python.webp',
+            '/static/c.webp',
+            '/static/javascript.webp',
+            '/static/html.webp',
+            '/static/css.webp',
+            '/static/tg.webp'
         ];
         icons.forEach((iconImg, index) => {
             const img = new Image();
@@ -1378,17 +1376,44 @@
         return Promise.resolve();
     }
 
+    let audioUnlockArmed = false;
+
+    function removeAudioUnlockListeners() {
+        if (!audioUnlockArmed) return;
+        audioUnlockArmed = false;
+        document.removeEventListener('pointerdown', unlockAudioFromGesture, true);
+        document.removeEventListener('touchstart', unlockAudioFromGesture, true);
+        document.removeEventListener('keydown', unlockAudioFromGesture, true);
+    }
+
+    function unlockAudioFromGesture() {
+        if (!siteSettings.music.enabled || !audio.paused) {
+            removeAudioUnlockListeners();
+            return;
+        }
+        playWithFade()
+            .then(removeAudioUnlockListeners)
+            .catch(() => {});
+    }
+
+    function armAudioUnlock() {
+        if (audioUnlockArmed || !siteSettings.music.enabled) return;
+        audioUnlockArmed = true;
+        document.addEventListener('pointerdown', unlockAudioFromGesture, true);
+        document.addEventListener('touchstart', unlockAudioFromGesture, true);
+        document.addEventListener('keydown', unlockAudioFromGesture, true);
+    }
+
+    armAudioUnlock();
+
     window.addEventListener('load', () => {
         if (siteSettings.music.enabled && siteSettings.music.autoplay && audio.paused) {
-            playWithFade().catch(error => {
-                console.log('Autoplay prevented');
-                document.body.addEventListener('click', function initAudio() {
-                    if (siteSettings.music.enabled) {
-                        playWithFade().catch(() => {});
-                    }
-                    document.body.removeEventListener('click', initAudio);
-                }, { once: true });
-            });
+            playWithFade()
+                .then(removeAudioUnlockListeners)
+                .catch(() => {
+                    console.log('Autoplay prevented; waiting for user interaction');
+                    armAudioUnlock();
+                });
         }
     });
 
