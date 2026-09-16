@@ -1,27 +1,40 @@
-name: Build patched index
+name: Apply site optimization
 
 on:
   push:
     paths:
       - '.github/workflows/build-patched-index.yml'
 
+permissions:
+  contents: write
+
 jobs:
-  build:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Patch index
-        run: |
-          python3 .github/site_patch.py
-          mkdir -p output
-          cp index.html output/index.html
-
-      - name: Upload patched index
-        uses: actions/upload-artifact@v4
         with:
-          name: patched-index
-          path: output/index.html
-          if-no-files-found: error
-          retention-days: 1
+          ref: main
+
+      - name: Install WebP tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq webp
+
+      - name: Optimize icons and patch site
+        run: |
+          for name in python c javascript html css tg; do
+            cwebp -quiet -q 85 -m 6 -resize 512 512 -metadata none "static/${name}.png" -o "static/${name}.webp"
+            test -s "static/${name}.webp"
+          done
+          python3 .github/site_patch.py
+          rm static/python.png static/c.png static/javascript.png static/html.png static/css.png static/tg.png
+
+      - name: Commit site changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html static
+          git commit -m "Optimize images and fix audio startup"
+          git push origin HEAD:main
