@@ -1,0 +1,162 @@
+name: One-shot site tuning
+
+on:
+  push:
+    paths:
+      - .github/workflows/site-tune.yml
+
+permissions:
+  contents: write
+
+jobs:
+  tune:
+    if: github.event.head_commit.message == 'Add temporary site tuning workflow'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update site copy and audio behavior
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          replacements = {
+              'Developer • Creator • Visionary': 'Developer • Telegram • iOS • Web',
+              '<span class="stat-label">Project\'s</span>': '<span class="stat-label">Projects</span>',
+              '{ title: "Project\'s", url: "https://t.me/Folzyworks", icon: "🎨" }': '{ title: "Projects", url: "https://t.me/Folzyworks", icon: "🎨" }',
+              'value="70" oninput="changeVolume(this.value)"': 'value="35" oninput="changeVolume(this.value)"',
+              'music: { enabled: true, autoplay: true, show_player: false, track_name: "red lipstick + 2 lines", artist: "Овсянкин", url: "/static/track.mp3" }': 'music: { enabled: true, autoplay: true, show_player: false, volume: 0.35, fade_in_ms: 1000, track_name: "red lipstick + 2 lines", artist: "Овсянкин", url: "/static/track.mp3" }',
+              '    let isMinimized = true;\n    audio.volume = 0.7;': '''    let isMinimized = true;
+    let volumeFadeFrame = null;
+    const defaultVolume = Math.max(0, Math.min(1, siteSettings.music.volume ?? 0.35));
+    volumeSlider.value = Math.round(defaultVolume * 100);
+    audio.volume = defaultVolume;
+
+    function fadeAudioTo(targetVolume = defaultVolume, duration = siteSettings.music.fade_in_ms ?? 1000) {
+        if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
+        const target = Math.max(0, Math.min(1, targetVolume));
+        const startVolume = audio.volume;
+        const startTime = performance.now();
+
+        if (duration <= 0 || Math.abs(target - startVolume) < 0.001) {
+            audio.volume = target;
+            updateVolumeIcon();
+            return;
+        }
+
+        function step(now) {
+            const progress = Math.min(1, (now - startTime) / duration);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            audio.volume = startVolume + (target - startVolume) * eased;
+            updateVolumeIcon();
+            if (progress < 1) volumeFadeFrame = requestAnimationFrame(step);
+            else volumeFadeFrame = null;
+        }
+
+        volumeFadeFrame = requestAnimationFrame(step);
+    }
+
+    function playWithFade() {
+        audio.volume = 0;
+        updateVolumeIcon();
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            return playPromise.then(() => {
+                fadeAudioTo(defaultVolume);
+                updatePlayIcon(true);
+            });
+        }
+        fadeAudioTo(defaultVolume);
+        updatePlayIcon(true);
+        return Promise.resolve();
+    }''',
+              '''            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => updatePlayIcon(true))
+                .catch(error => {
+                    console.log('Autoplay prevented');
+                    document.body.addEventListener('click', function initAudio() {
+                        if(siteSettings.music.enabled) {
+                            audio.play();
+                            updatePlayIcon(true);
+                        }
+                        document.body.removeEventListener('click', initAudio);
+                    }, { once: true });
+                });
+            }''': '''            playWithFade().catch(error => {
+                console.log('Autoplay prevented');
+                document.body.addEventListener('click', function initAudio() {
+                    if (siteSettings.music.enabled) {
+                        playWithFade().catch(() => {});
+                    }
+                    document.body.removeEventListener('click', initAudio);
+                }, { once: true });
+            });''',
+              '''    function togglePlay() {
+        if (audio.paused) { audio.play(); updatePlayIcon(true); }
+        else { audio.pause(); updatePlayIcon(false); }
+    }''': '''    function togglePlay() {
+        if (audio.paused) {
+            playWithFade().catch(() => {});
+        } else {
+            if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
+            volumeFadeFrame = null;
+            audio.pause();
+            updatePlayIcon(false);
+        }
+    }''',
+              'const previousVolume = audio.dataset.previousVolume || 0.7;': 'const previousVolume = audio.dataset.previousVolume || defaultVolume;',
+          }
+
+          for old, new in replacements.items():
+              if old not in s:
+                  raise SystemExit(f'Required source fragment not found: {old[:90]!r}')
+              s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Optimize image assets
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq webp
+
+          for name in python c javascript html css tg; do
+            cwebp -quiet -q 82 -m 6 -metadata none "static/${name}.png" -o "static/${name}.webp"
+            test -s "static/${name}.webp"
+          done
+
+          gif2webp -quiet -q 82 -m 6 -metadata none static/bmw.gif -o static/bmw.webp
+          test -s static/bmw.webp
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          for name in ('python', 'c', 'javascript', 'html', 'css', 'tg'):
+              s = s.replace(f'/static/{name}.png', f'/static/{name}.webp')
+          s = s.replace('/static/bmw.gif', '/static/bmw.webp')
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          rm static/python.png static/c.png static/javascript.png static/html.png static/css.png static/tg.png static/bmw.gif
+
+          echo 'Asset sizes after optimization:'
+          ls -lh static/*.webp static/track.mp3 static/photo_4.jpg
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Tune site audio and optimize assets [skip ci]"
+          git push origin HEAD:main
