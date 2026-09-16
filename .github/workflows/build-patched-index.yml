@@ -1,4 +1,4 @@
-name: Build patched index
+name: Test workflow
 
 on:
   push:
@@ -6,22 +6,7 @@ on:
       - '.github/workflows/build-patched-index.yml'
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Patch index
-        run: |
-          python3 .github/site_patch.py
-          mkdir -p output
-          cp index.html output/index.html
-
-      - name: Upload patched index
-        uses: actions/upload-artifact@v4
-        with:
-          name: patched-index
-          path: output/index.html
-          if-no-files-found: error
-          retention-days: 1
+      - run: echo ok
