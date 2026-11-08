@@ -153,10 +153,10 @@
     const approx = s.estimated ? '≈ ' : '';
     for (const name of ['today', 'week', 'month', 'avg_day']) {
       const block = s[name] || { tracks: 0, seconds: 0 };
-      countUp($(`[data-stat="${name}"]`), block.seconds, (v) => approx + duration(v));
+      countUp($(`[data-stat="${name}"]`), block.seconds, (v) => (v ? approx : '') + duration(v));
       $(`[data-stat-tracks="${name}"]`).textContent = tracks(block.tracks);
     }
-    $('#strip-today').textContent = `${approx}${duration(s.today.seconds)} · ${tracks(s.today.tracks)}`;
+    $('#strip-today').textContent = `${s.today.seconds ? approx : ''}${duration(s.today.seconds)} · ${tracks(s.today.tracks)}`;
     $('#stats-note').textContent = s.estimated
       ? '≈ — длительность части треков ещё уточняется, время посчитано примерно.'
       : '';
