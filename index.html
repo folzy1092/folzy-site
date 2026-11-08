@@ -1,1525 +1,448 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Folzy Bio - "New Era"</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            background: #050505;
-            color: #ffffff;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .snow-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 5;
-            overflow: hidden;
-        }
-
-        .snowflake {
-            position: absolute;
-            top: -10vh;
-            color: #fff;
-            font-size: 1em;
-            font-family: Arial, sans-serif;
-            text-shadow: 0 0 5px #000;
-            animation-name: snowflakes-fall, snowflakes-shake;
-            animation-timing-function: linear, ease-in-out;
-            animation-iteration-count: infinite, infinite;
-            opacity: 0;
-        }
-
-        @keyframes snowflakes-fall {
-            0% { top: -10vh; opacity: 0; }
-            10% { opacity: 0.7; }
-            100% { top: 110vh; opacity: 0.2; }
-        }
-
-        @keyframes snowflakes-shake {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(80px); }
-        }
-        .rain-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -2;
-            pointer-events: none;
-        }
-
-        .rain-background {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            filter: blur(8px) grayscale(95%) brightness(0.4) contrast(1.1);
-            background-color: #1a1a1a;
-            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
-        }
-
-        #rain-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            filter: blur(0.5px);
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .tech-icons {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .tech-icon {
-            position: absolute;
-            width: 175px;
-            height: 175px;
-            opacity: 0.79;
-            pointer-events: auto;
-            animation: float-icon 8s ease-in-out infinite;
-            transition: z-index 0s;
-        }
-
-        .tech-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: grayscale(100%) brightness(1.2);
-            transform: rotate(var(--rot, 0deg));
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;
-            cursor: pointer;
-            border-radius: 12px;
-        }
-
-        .tech-icon:hover {
-            z-index: 100;
-        }
-
-        .tech-icon:hover img {
-            transform: rotate(var(--rot, 0deg)) scale(1.2);
-            filter: grayscale(0%) brightness(1.1) drop-shadow(0 0 15px rgba(255,255,255,0.2));
-        }
-
-        @keyframes float-icon {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-30px); }
-        }
-
-        .icon-1 { top: 10%; left: 5%;  --rot: -25deg; animation-delay: 0s; }
-        .icon-2 { top: 15%; right: 8%; --rot: 30deg;  animation-delay: 2s; }
-        .icon-3 { bottom: 16%; left: 8%; --rot: -15deg; animation-delay: 1s; }
-        .icon-4 { bottom: 15%; right: 5%; --rot: 45deg;  animation-delay: 3s; }
-        .icon-5 { top: 40%; right: 10%; --rot: 15deg;  animation-delay: 1.5s; }
-        .icon-6 { bottom: 45%; left: 9%; --rot: -35deg; animation-delay: 2.5s; }
-
-        @media (max-width: 1024px) {
-            .tech-icon {
-                width: 120px;
-                height: 120px;
-                opacity: 0.5;
-            }
-        }
-
-        .container {
-            position: relative;
-            z-index: 10;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            pointer-events: none;
-        }
-
-        .card-common {
-            background: rgba(30, 30, 30, 0.4);
-            backdrop-filter: blur(25px) saturate(100%);
-            -webkit-backdrop-filter: blur(25px) saturate(100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 40px;
-            padding: 50px 40px;
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-            box-shadow:
-                0 40px 80px -20px rgba(0, 0, 0, 0.8),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-            pointer-events: auto;
-            position: absolute;
-            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        @media (max-width: 1024px) {
-            .card-common {
-                padding: 40px 30px;
-                max-width: 500px;
-                width: auto;
-                margin: 0 auto;
-            }
-        }
-
-        .card-active {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: auto;
-            z-index: 20;
-        }
-
-        .card-hidden {
-            opacity: 0;
-            transform: translateY(20px) scale(0.95);
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .logo {
-            width: 96px;
-            height: 96px;
-            margin: 0 auto 25px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-        }
-
-        .logo img {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            border-radius: 12px;
-            padding: 8px;
-        }
-
-        .logo.loading img {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .title {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-            filter: drop-shadow(0 2px 10px rgba(255,255,255,0.1));
-        }
-
-        @media (max-width: 1024px) {
-            .title {
-                font-size: 2rem;
-            }
-        }
-
-        .code {
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-            letter-spacing: 0.5px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 6px 12px;
-            border-radius: 8px;
-            display: inline-block;
-        }
-
-        .subtitle {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 40px;
-            font-weight: 400;
-        }
-
-        .visitor-counter {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            z-index: 100;
-            background: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 15px 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease;
-        }
-
-        .visitor-counter:hover {
-            transform: translateY(-2px);
-        }
-
-        .counter-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .counter-icon svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        .counter-content {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .counter-label {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        .counter-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-            font-family: 'SF Mono', monospace;
-        }
-
-        @keyframes countUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .counter-value.animate {
-            animation: countUp 0.5s ease;
-        }
-
-        @media (max-width: 768px) {
-            .visitor-counter {
-                top: 20px;
-                right: 20px;
-                padding: 12px 18px;
-                gap: 10px;
-            }
-
-            .counter-icon svg {
-                width: 18px;
-                height: 18px;
-            }
-
-            .counter-label {
-                font-size: 0.6rem;
-            }
-
-            .counter-value {
-                font-size: 1.2rem;
-            }
-        }
-
-        .music-player {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 100;
-            background: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px;
-            width: 320px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-
-        .music-player:hover {
-            transform: translateY(-2px);
-        }
-
-        .music-player.minimized {
-            width: 60px;
-            height: 60px;
-            padding: 0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .music-player.minimized .player-content {
-            display: none;
-        }
-
-        .music-player.minimized .minimize-icon {
-            display: block !important;
-            font-size: 1.5rem;
-        }
-
-        .minimize-icon {
-            display: none;
-        }
-
-        .player-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .player-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .player-title-icon {
-            width: 20px;
-            height: 20px;
-            opacity: 0.7;
-        }
-
-        .minimize-btn {
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.5);
-            cursor: pointer;
-            padding: 5px;
-            transition: all 0.3s ease;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .minimize-btn:hover {
-            color: rgba(255, 255, 255, 0.9);
-            transform: scale(1.1);
-        }
-
-        .minimize-btn svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .track-info {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .track-name {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-bottom: 5px;
-        }
-
-        .track-artist {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.8rem;
-        }
-
-        .progress-container {
-            margin-bottom: 15px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-bar:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.9));
-            border-radius: 3px;
-            transition: width 0.1s linear;
-            position: relative;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            background: #ffffff;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .progress-bar:hover .progress-fill::after {
-            opacity: 1;
-        }
-
-        .time-display {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.5);
-            margin-top: 8px;
-            font-family: 'SF Mono', monospace;
-        }
-
-        .player-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .control-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1.2rem;
-        }
-
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-            transform: scale(1.1);
-        }
-
-        .control-btn.play-btn {
-            width: 55px;
-            height: 55px;
-            font-size: 1.5rem;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .control-btn.play-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .volume-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .volume-icon {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        .volume-icon:hover {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .volume-slider {
-            flex: 1;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            outline: none;
-            -webkit-appearance: none;
-            cursor: pointer;
-        }
-
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
-            background: #ffffff;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s ease;
-        }
-
-        .volume-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-        }
-
-        .volume-slider::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            background: #ffffff;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        @media (max-width: 1024px) {
-            .music-player {
-                display: none;
-            }
-        }
-
-        .buttons-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 40px;
-        }
-
-        .buttons-grid.donate-grid {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .span-2 {
-            grid-column: span 2;
-        }
-
-        .btn {
-            position: relative;
-            padding: 18px 24px;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-            color: rgba(255, 255, 255, 0.85);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-            overflow: hidden;
-            width: 100%;
-        }
-
-        .btn span {
-            font-size: 1.2rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255, 255, 255, 0.85);
-            transition: transform 0.3s ease, color 0.3s ease;
-        }
-
-        .btn span svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-            box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-        }
-
-        .btn:hover::after { opacity: 1; }
-        .btn:hover span { transform: scale(1.1); color: #ffffff; }
-        .btn:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.05); }
-
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            padding: 25px 20px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .stat-item { display: flex; flex-direction: column; gap: 6px; }
-        .stat-number { font-size: 1.5rem; font-weight: 700; color: #ffffff; text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
-        .stat-label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
-
-        .toast {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(10, 10, 10, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 16px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .toast-icon {
-            color: #00ff88;
-        }
-
-        .toast.error {
-            background: rgba(255, 50, 50, 0.2);
-            border-color: rgba(255, 100, 100, 0.3);
-        }
-
-        .toast.error .toast-icon {
-            color: #ff6b6b;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                overflow: auto;
-                min-height: initial;
-                min-width: initial;
-                height: auto;
-            }
-
-            .container {
-                height: auto;
-                min-height: 100vh;
-                justify-content: flex-start;
-                padding: 5vh 0;
-                position: static;
-                display: block;
-            }
-
-            .card-common {
-                width: 90vw;
-                max-width: 420px;
-                margin: 0 auto;
-                padding: 30px 20px;
-                position: static;
-                transform: none;
-                opacity: 1;
-                display: block;
-            }
-
-            #main-card.card-hidden, #donate-card.card-hidden {
-                display: none;
-            }
-
-            #main-card.card-active, #donate-card.card-active {
-                display: block;
-            }
-
-            .tech-icon {
-                width: 90px;
-                height: 90px;
-                opacity: 0.35;
-            }
-
-            .icon-1 { top: 10%; left: -2%; }
-            .icon-2 { top: 15%; right: -5%; }
-            .icon-3 { bottom: 12%; left: -4%; }
-            .icon-4 { bottom: 15%; right: 9%; }
-            .icon-5 { top: 40%; right: -8%; }
-            .icon-6 { bottom: 45%; left: -6%; }
-
-            .title {
-                font-size: 1.9rem;
-            }
-
-            .logo {
-                width: 88px;
-                height: 88px;
-            }
-
-            .logo img {
-                width: 72px;
-                height: 72px;
-            }
-
-            .buttons-grid {
-                gap: 12px;
-                margin-bottom: 30px;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .buttons-grid {
-                grid-template-columns: 1fr;
-            }
-            .span-2 {
-                grid-column: span 1;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Folzy</title>
+  <meta name="description" content="Folzy — бэкенд на Python, iOS на Swift, Telegram-боты. Рига. Что слушаю прямо сейчас и сколько за месяц.">
+  <meta name="theme-color" content="#0c0c0d">
+  <meta property="og:title" content="Folzy">
+  <meta property="og:description" content="Бэкенд на Python, iOS на Swift, Telegram-боты. Рига.">
+  <meta property="og:image" content="https://folzy.ru/assets/media/avatar-poster.jpg">
+  <link rel="icon" href="/assets/media/avatar-poster.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site.css?v=5">
+  <script src="/assets/js/config.js?v=5"></script>
+  <script src="/assets/js/site.js?v=5" defer></script>
+  <script src="/assets/js/live.js?v=5" defer></script>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+      <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+      <symbol id="i-music-off" viewBox="0 0 24 24"><path d="M9 9v9M9 5l11-2v9M20 16a3 3 0 0 1-3 0"/><circle cx="6" cy="18" r="3"/><path d="m3 3 18 18"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4z"/></symbol>
+      <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+      <symbol id="i-channel" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+      <symbol id="i-at" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+      <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.8 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+      <symbol id="i-app" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></symbol>
+      <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M19.4 14.9a2.5 2.5 0 1 0 0-3.8V7a1 1 0 0 0-1-1h-4.1a2.5 2.5 0 1 0-3.8 0H6.4a1 1 0 0 0-1 1v4.1a2.5 2.5 0 1 1 0 3.8V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/></symbol>
+      <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 13v1M15 13v1M2 13v2M22 13v2"/></symbol>
+      <symbol id="i-game" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-4 3.6L2 15a3 3 0 0 0 5.4 2L9 15h6l1.6 2a3 3 0 0 0 5.4-2l-.7-6.4a4 4 0 0 0-4-3.6z"/></symbol>
+      <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+      <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 9h8M12 9v8"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
+      <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 0 15.4 6.4M21 12A9 9 0 0 0 5.6 5.6"/><path d="M3 4v4h4M21 20v-4h-4"/></symbol>
+      <symbol id="i-chip" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></symbol>
+      <symbol id="i-display" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+      <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></symbol>
+      <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/></symbol>
+    </defs>
+  </svg>
 
-    <div class="rain-container">
-        <div class="rain-background" id="rain-background"></div>
-        <canvas id="rain-canvas"></canvas>
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a class="nav__brand" href="#top">Folzy</a>
+      <nav class="nav__links" aria-label="Разделы">
+        <span class="nav__pill" aria-hidden="true"></span>
+        <a href="#projects">Проекты</a>
+        <a href="#live">Live</a>
+        <a href="#about">Обо мне</a>
+        <a href="#phone">Телефон</a>
+        <a href="#contact">Связь</a>
+      </nav>
+      <a class="btn btn--light btn--sm" href="https://t.me/folzymanager" target="_blank" rel="noopener">Telegram<svg class="ico"><use href="#i-arrow"/></svg></a>
     </div>
-    <div class="snow-container" id="snow-container"></div>
-    <div class="overlay"></div>
+  </header>
 
-    <div class="visitor-counter">
-        <span class="counter-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
-                <circle cx="12" cy="12" r="3"/>
-            </svg>
-        </span>
-        <div class="counter-content">
-            <div class="counter-label">Посетителей</div>
-            <div class="counter-value" id="visitor-count">0</div>
+  <main id="top">
+    <section class="hero">
+      <canvas class="hero__rain" id="rain" aria-hidden="true"></canvas>
+      <div class="wrap hero__grid">
+        <div class="hero__text">
+          <h1 class="hero__name" aria-label="Folzy"><span>F</span><span>o</span><span>l</span><span>z</span><span>y</span></h1>
+          <p class="hero__lead reveal">Пишу бэкенд на Python и iOS-приложения на Swift. Делаю Telegram-ботов и расширения, которые экономят время. Есть задача или идея — пиши, обсудим.</p>
+          <div class="hero__actions reveal">
+            <a class="btn btn--light btn--lg" href="https://t.me/folzymanager" target="_blank" rel="noopener">Написать в Telegram<svg class="ico"><use href="#i-arrow"/></svg></a>
+            <a class="btn btn--ghost btn--lg" href="#projects">Проекты</a>
+          </div>
         </div>
-    </div>
-
-    <div class="music-player minimized" id="music-player">
-        <svg class="minimize-icon" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)">
-            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-        </svg>
-        <div class="player-content">
-            <div class="player-header">
-                <div class="player-title">
-                    <svg class="player-title-icon" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
-                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                    </svg>
-                    <span>Music Player</span>
-                </div>
-                <button class="minimize-btn" onclick="toggleMinimize()">
-                    <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)">
-                        <path d="M19 13H5v-2h14v2z"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="track-info">
-                <div class="track-name" id="track-name">red lipstick + 2 lines</div>
-                <div class="track-artist" id="track-artist">Овсянкин</div>
-            </div>
-
-            <div class="progress-container">
-                <div class="progress-bar" id="progress-bar" onclick="seekAudio(event)">
-                    <div class="progress-fill" id="progress-fill"></div>
-                </div>
-                <div class="time-display">
-                    <span id="current-time">0:00</span>
-                    <span id="duration">0:00</span>
-                </div>
-            </div>
-
-            <div class="player-controls">
-                <button class="control-btn" onclick="skipBackward()">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/>
-                    </svg>
-                </button>
-                <button class="control-btn play-btn" id="play-btn" onclick="togglePlay()">
-                    <svg id="play-icon" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </button>
-                <button class="control-btn" onclick="skipForward()">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="volume-container">
-                <span class="volume-icon" id="volume-icon" onclick="toggleMute()">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                    </svg>
-                </span>
-                <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="35" oninput="changeVolume(this.value)">
-            </div>
+        <div class="hero__avatar reveal">
+          <img src="/assets/media/avatar.webp" width="320" height="320" alt="Аватар Folzy" fetchpriority="high">
         </div>
-    </div>
+      </div>
 
-    <audio id="background-audio" preload="metadata">
-        <source src="/static/track.mp3" type="audio/mpeg">
-    </audio>
+      <div class="wrap">
+        <div class="strip reveal" role="list">
+          <a class="strip__item" href="#live" role="listitem">
+            <span class="badge-ico" id="strip-music-ico"><svg class="ico"><use href="#i-music"/></svg></span>
+            <span class="strip__body">
+              <span class="label">Музыка</span>
+              <span class="strip__value" id="strip-music">Загружаю…</span>
+            </span>
+          </a>
+          <div class="strip__item" role="listitem">
+            <span class="badge-ico"><svg class="ico"><use href="#i-clock"/></svg></span>
+            <span class="strip__body">
+              <span class="label">Моё время</span>
+              <span class="strip__value mono" data-clock="short">--:--</span>
+            </span>
+          </div>
+          <a class="strip__item" href="#live" role="listitem">
+            <span class="badge-ico"><svg class="ico"><use href="#i-headphones"/></svg></span>
+            <span class="strip__body">
+              <span class="label">Музыки сегодня</span>
+              <span class="strip__value mono" id="strip-today">—</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </section>
 
-    <div class="tech-icons">
-        <div class="tech-icon icon-1"><img src="/static/python.webp" alt="Python"></div>
-        <div class="tech-icon icon-2"><img src="/static/c.webp" alt="C"></div>
-        <div class="tech-icon icon-3"><img src="/static/javascript.webp" alt="JavaScript"></div>
-        <div class="tech-icon icon-4"><img src="/static/html.webp" alt="HTML"></div>
-        <div class="tech-icon icon-5"><img src="/static/css.webp" alt="CSS"></div>
-        <a href="https://t.me/folzybio" target="_blank" class="tech-icon icon-6"><img src="/static/tg.webp" alt="Telegram"></a>
-    </div>
+    <!-- 01 Проекты -->
+    <section class="section" id="projects">
+      <div class="wrap">
+        <h2 class="section__title reveal"><span class="section__num">01</span>Проекты</h2>
 
-    <div class="container">
-
-        <div id="main-card" class="card-common card-active">
-            <div class="bio-card-content">
-                <div class="logo loading" id="main-logo">
-                    <img src="/static/bmw.gif" alt="Folzy Logo">
-                </div>
-
-                <h1 class="title">
-                    <a href="https://t.me/m/05phhbDkYmQy" style="text-decoration: none; color: inherit;">Folzy</a>
-                </h1>
-                <div class="code">System.out.println("Hello");</div>
-                <p class="subtitle">Developer • Telegram • iOS • Web</p>
-
-                <div class="buttons-grid" id="main-buttons-container">
-                    <!-- Buttons are rendered from siteSettings -->
-                </div>
-
-                <div style="margin-top: 15px; width: 100%;">
-                    <button onclick="switchCard('donate')" class="btn span-2" style="width: 100%;"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>Donate</button>
-                </div>
-
-                <div class="stats">
-                    <div class="stat-item"><span class="stat-number">100+</span><span class="stat-label">Projects</span></div>
-                    <div class="stat-item"><span class="stat-number">7</span><span class="stat-label">Client's</span></div>
-                    <div class="stat-item"><span class="stat-number">4.6</span><span class="stat-label">Rating ★</span></div>
-                </div>
-            </div>
+        <div class="tabs reveal" role="tablist" aria-label="Категории проектов">
+          <span class="tabs__pill" aria-hidden="true"></span>
+          <button class="tab is-active" role="tab" aria-selected="true" data-tab="apps"><svg class="ico"><use href="#i-app"/></svg>Приложения</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="bots"><svg class="ico"><use href="#i-bot"/></svg>Боты</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="ext"><svg class="ico"><use href="#i-puzzle"/></svg>Расширения</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="games"><svg class="ico"><use href="#i-game"/></svg>Игры</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="tg"><svg class="ico"><use href="#i-channel"/></svg>Каналы</button>
         </div>
 
-        <div id="donate-card" class="card-common card-hidden">
-            <div class="bio-card-content">
-                <div class="logo loading" id="donate-logo">
-                    <img src="/static/bmw.gif" alt="Folzy Logo">
-                </div>
+        <div class="panels">
+          <div class="cards" role="tabpanel" data-panel="apps">
+            <a class="card card--link" href="https://github.com/folzy1092/Shadow" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-app"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>Shadow</h3>
+              <p>Telegram-клиент для iOS с режимом призрака: читаешь и смотришь без следов, а удалённые сообщения остаются у тебя.</p>
+              <span class="card__meta mono">Swift · iOS</span>
+            </a>
+            <a class="card card--link" href="https://github.com/folzy1092/gazon" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-app"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>Gazon</h3>
+              <p>Приложение для пунктов выдачи: темп сортировки вживую и прогноз, когда закончится разбор поставки.</p>
+              <span class="card__meta mono">Swift · iOS</span>
+            </a>
+          </div>
 
-                <h1 class="title">Donate</h1>
-                <p class="subtitle">Support the Creator</p>
+          <div class="cards" role="tabpanel" data-panel="bots" hidden>
+            <a class="card card--link" href="https://t.me/folzymanagebot" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-music"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>folzy-selfbot</h3>
+              <p>Показывает трек, который сейчас играет, прямо в био и имени Telegram. Плюс пост канала с текстом песни и топ недели.</p>
+              <span class="card__meta mono">@folzymanagebot</span>
+            </a>
+            <a class="card card--link" href="https://t.me/lgucheckbot" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-bot"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>lengubot</h3>
+              <p>Расписание колледжа: уведомления об изменениях, автообновление, веб-приложение и версия для VK.</p>
+              <span class="card__meta mono">@lgucheckbot</span>
+            </a>
+            <a class="card card--link" href="https://github.com/folzy1092/phototoemoji" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-bot"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>phototoemoji</h3>
+              <p>Превращает твои фото в кастомные эмодзи для Telegram.</p>
+              <span class="card__meta mono">JavaScript · Telegram</span>
+            </a>
+            <a class="card card--link" href="https://t.me/Folzy_questions_bot" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-send"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>Spamblock</h3>
+              <p>Бот для связи, если у тебя спамблок и написать в личку не выходит.</p>
+              <span class="card__meta mono">@Folzy_questions_bot</span>
+            </a>
+          </div>
 
-                <div class="buttons-grid donate-grid">
-                    <a href="https://www.donationalerts.com/r/folzy" class="btn span-2" target="_blank">
-                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h15v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/><line x1="6" y1="2" x2="6" y2="5"/><line x1="10" y1="2" x2="10" y2="5"/><line x1="14" y1="2" x2="14" y2="5"/></svg></span> DonationAlerts
-                    </a>
+          <div class="cards" role="tabpanel" data-panel="ext" hidden>
+            <a class="card card--link" href="https://github.com/folzy1092/SoundCloud-Shuffle" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-wave"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>SoundCloud Shuffle</h3>
+              <p>Честный шаффл по всем лайкам SoundCloud, не останавливая текущий трек.</p>
+              <span class="card__meta mono">JavaScript · Extension</span>
+            </a>
+            <a class="card card--link" href="https://github.com/folzy1092/Web-Converter" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-coin"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>Web Converter</h3>
+              <p>Конвертер валют и крипты: выделяешь любую цену на странице и видишь её в своих валютах.</p>
+              <span class="card__meta mono">JavaScript · Extension</span>
+            </a>
+          </div>
 
-                    <button onclick="copyCrypto('TRC20')" class="btn">
-                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7 8.5h10M12 8.5V16"/></svg></span> USDT (TRC20)
-                    </button>
+          <div class="cards" role="tabpanel" data-panel="games" hidden>
+            <a class="card card--link card--wide" href="https://github.com/folzy1092/Yandex-Game/tree/main/DroneStrike" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-game"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>Drone Strike</h3>
+              <p>Симулятор FPV-дрона камикадзе для Яндекс Игр.</p>
+              <span class="card__meta mono">C# · Unity</span>
+            </a>
+          </div>
 
-                    <button onclick="copyCrypto('TON')" class="btn">
-                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18M15 3l-3 18"/></svg></span> TON
-                    </button>
+          <div class="cards" role="tabpanel" data-panel="tg" hidden>
+            <a class="card card--link" href="https://t.me/folzybio" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-channel"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>Folzy.bio()</h3>
+              <p>Мой канал. Там пост, который сам обновляется под трек, что я слушаю, с текстом песни, и топ недели.</p>
+              <span class="card__meta mono">@folzybio</span>
+            </a>
+            <a class="card card--link" href="https://t.me/Folzy_soft" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-code"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>FolzySofts</h3>
+              <p>Канал с моим софтом и скриптами.</p>
+              <span class="card__meta mono">@Folzy_soft</span>
+            </a>
+            <a class="card card--link" href="https://t.me/Folzyworks" target="_blank" rel="noopener">
+              <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-star"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+              <h3>Folzyworks</h3>
+              <p>Канал с моими работами.</p>
+              <span class="card__meta mono">@Folzyworks</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
 
-                    <a href="https://t.me/FolzyManagebot" class="btn span-2" target="_blank">
-                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Telegram Stars
-                    </a>
+    <!-- 02 Live -->
+    <section class="section" id="live">
+      <div class="wrap">
+        <h2 class="section__title reveal"><span class="section__num">02</span>Live</h2>
+        <p class="demo-note" id="demo-note" hidden>Демо-данные для превью: endpoint ещё не подключён.</p>
 
-                    <button onclick="switchCard('main')" class="btn span-2" style="margin-top: 10px; background: rgba(255,255,255,0.05);">
-                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span> Назад
-                    </button>
-                </div>
+        <div class="live reveal">
+          <article class="panel now" id="now" data-state="loading" aria-live="polite">
+            <div class="panel__head">
+              <span class="label mono">Сейчас играет</span>
+              <button class="icon-btn" type="button" data-refresh aria-label="Обновить"><svg class="ico"><use href="#i-refresh"/></svg></button>
             </div>
+            <div class="now__body">
+              <div class="now__cover" id="now-cover">
+                <svg class="ico now__cover-ico"><use href="#i-music-off"/></svg>
+              </div>
+              <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <h3 class="now__title" id="now-title">Загружаю…</h3>
+              <p class="now__artist" id="now-artist">&nbsp;</p>
+              <div class="progress" id="now-progress" hidden>
+                <div class="progress__bar"><i id="now-progress-fill"></i></div>
+                <div class="progress__time mono"><span id="now-pos">0:00</span><span id="now-dur">0:00</span></div>
+              </div>
+              <a class="btn btn--ghost btn--sm now__link" id="now-link" href="#" target="_blank" rel="noopener" hidden>Открыть в SoundCloud<svg class="ico"><use href="#i-arrow"/></svg></a>
+              <p class="now__last" id="now-last" hidden></p>
+            </div>
+          </article>
+
+          <article class="panel stats" id="stats" data-state="loading">
+            <div class="panel__head">
+              <span class="label mono">Музыка</span>
+              <button class="icon-btn" type="button" data-refresh aria-label="Обновить"><svg class="ico"><use href="#i-refresh"/></svg></button>
+            </div>
+            <div class="tiles">
+              <div class="tile"><span class="label">Сегодня</span><span class="tile__value mono" data-stat="today">—</span><span class="tile__sub" data-stat-tracks="today">&nbsp;</span></div>
+              <div class="tile"><span class="label">За неделю</span><span class="tile__value mono" data-stat="week">—</span><span class="tile__sub" data-stat-tracks="week">&nbsp;</span></div>
+              <div class="tile"><span class="label">За месяц</span><span class="tile__value mono" data-stat="month">—</span><span class="tile__sub" data-stat-tracks="month">&nbsp;</span></div>
+              <div class="tile"><span class="label">В среднем за день</span><span class="tile__value mono" data-stat="avg_day">—</span><span class="tile__sub" data-stat-tracks="avg_day">&nbsp;</span></div>
+            </div>
+            <p class="stats__note" id="stats-note"></p>
+          </article>
         </div>
 
+        <article class="panel top reveal" id="top-tracks" hidden>
+          <div class="panel__head"><span class="label mono">Топ треков месяца</span></div>
+          <ol class="top__list" id="top-list"></ol>
+        </article>
+      </div>
+    </section>
+
+    <!-- 03 Обо мне -->
+    <section class="section" id="about">
+      <div class="wrap">
+        <h2 class="section__title reveal"><span class="section__num">03</span>Обо мне</h2>
+        <div class="facts">
+          <article class="panel fact reveal">
+            <span class="badge-ico"><svg class="ico"><use href="#i-at"/></svg></span>
+            <h3>Профиль</h3>
+            <dl>
+              <div><dt>Ник</dt><dd>Folzy</dd></div>
+              <div><dt>Регион</dt><dd>Латвия, Рига</dd></div>
+              <div><dt>Моё время</dt><dd class="mono" data-clock="full">--:--:--</dd></div>
+            </dl>
+          </article>
+          <article class="panel fact reveal">
+            <span class="badge-ico"><svg class="ico"><use href="#i-code"/></svg></span>
+            <h3>Стек</h3>
+            <dl>
+              <div><dt>Языки</dt><dd>Python, Swift, JavaScript</dd></div>
+              <div><dt>Боты</dt><dd>pyTelegramBotAPI, Business API</dd></div>
+              <div><dt>Бэкенд</dt><dd>Flask, SQLite</dd></div>
+              <div><dt>Сервер</dt><dd>Pterodactyl, Python 3.13</dd></div>
+            </dl>
+          </article>
+          <article class="panel fact reveal">
+            <span class="badge-ico"><svg class="ico"><use href="#i-cpu"/></svg></span>
+            <h3>Железо</h3>
+            <dl>
+              <div><dt>Процессор</dt><dd>Ryzen 7 5700X</dd></div>
+              <div><dt>Видеокарта</dt><dd>RTX 2070 Super</dd></div>
+              <div><dt>Память</dt><dd>16 ГБ DDR4-3200</dd></div>
+              <div><dt>Монитор</dt><dd>180 Гц</dd></div>
+              <div><dt>Телефон</dt><dd><a href="#phone">iPhone 15 Pro</a></dd></div>
+            </dl>
+          </article>
+          <article class="panel fact reveal">
+            <span class="badge-ico"><svg class="ico"><use href="#i-heart"/></svg></span>
+            <h3>Интересы</h3>
+            <dl>
+              <div><dt>Музыка</dt><dd>SoundCloud, русский андеграунд</dd></div>
+              <div><dt>Код</dt><dd>Python, Swift</dd></div>
+              <div><dt>Telegram</dt><dd>Боты и свои клиенты</dd></div>
+              <div><dt>Игры</dt><dd>CS2</dd></div>
+            </dl>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Телефон -->
+    <section class="section" id="phone">
+      <div class="wrap">
+        <h2 class="section__title reveal"><span class="section__num">04</span>Телефон</h2>
+        <div class="phone-block">
+          <div class="panel phone-stage reveal">
+            <div class="iphone" id="iphone" tabindex="0" role="button" aria-label="Повернуть iPhone">
+              <div class="iphone__face iphone__front">
+                <div class="iphone__screen">
+                  <span class="iphone__island"></span>
+                  <span class="iphone__date" id="iphone-date"></span>
+                  <span class="iphone__time" data-clock="lock">--:--</span>
+                  <div class="iphone__np" id="iphone-np">
+                    <span class="iphone__np-cover" id="iphone-np-cover"></span>
+                    <span class="iphone__np-text"><b id="iphone-np-title">Тишина</b><i id="iphone-np-artist">Сейчас ничего не играет</i></span>
+                  </div>
+                </div>
+              </div>
+              <div class="iphone__face iphone__back">
+                <div class="iphone__bump">
+                  <span class="lens l1"></span><span class="lens l2"></span><span class="lens l3"></span>
+                  <span class="flash"></span><span class="lidar"></span>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn--ghost btn--sm phone-flip" type="button" id="phone-flip"><svg class="ico"><use href="#i-rotate"/></svg>Повернуть</button>
+          </div>
+
+          <div class="phone-info">
+            <div class="panel phone-intro reveal">
+              <h3>iPhone 15 Pro</h3>
+              <p>Основной телефон. На нём тестирую свои iOS-приложения — Shadow и Gazon. На экране слева то, что я слушаю прямо сейчас.</p>
+              <div class="chips">
+                <span class="chip"><svg class="ico"><use href="#i-chip"/></svg>A17 Pro</span>
+                <span class="chip"><svg class="ico"><use href="#i-display"/></svg>120 Гц</span>
+                <span class="chip"><svg class="ico"><use href="#i-camera"/></svg>48 МП</span>
+              </div>
+            </div>
+            <div class="specs reveal">
+              <div class="spec"><span class="label">Процессор</span><span>A17 Pro, 3 нм, 6 ядер</span></div>
+              <div class="spec"><span class="label">Дисплей</span><span>6.1" OLED, ProMotion 120 Гц, до 2000 нит</span></div>
+              <div class="spec"><span class="label">Корпус</span><span>Титан, кнопка действия</span></div>
+              <div class="spec"><span class="label">Камера</span><span>48 МП + 12 МП сверхширокий + 3x телевик</span></div>
+              <div class="spec"><span class="label">Разъём</span><span>USB-C, USB 3 до 10 Гбит/с</span></div>
+              <div class="spec"><span class="label">Память</span><span>8 ГБ оперативной</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 Связь -->
+    <section class="section" id="contact">
+      <div class="wrap">
+        <h2 class="section__title reveal"><span class="section__num">05</span>Связь</h2>
+        <div class="contacts">
+          <a class="card card--link contact reveal" href="https://t.me/folzymanager" target="_blank" rel="noopener">
+            <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-send"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+            <h3>Telegram</h3>
+            <span class="card__meta mono">@folzymanager</span>
+          </a>
+          <a class="card card--link contact reveal" href="https://t.me/folzybio" target="_blank" rel="noopener">
+            <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-channel"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+            <h3>Канал</h3>
+            <span class="card__meta mono">@folzybio</span>
+          </a>
+          <a class="card card--link contact reveal" href="https://github.com/folzy1092" target="_blank" rel="noopener">
+            <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-github"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+            <h3>GitHub</h3>
+            <span class="card__meta mono">folzy1092</span>
+          </a>
+          <a class="card card--link contact reveal" href="https://folzy.is-a.dev" target="_blank" rel="noopener">
+            <div class="card__head"><span class="badge-ico"><svg class="ico"><use href="#i-star"/></svg></span><svg class="ico card__go"><use href="#i-arrow"/></svg></div>
+            <h3>Портфолио</h3>
+            <span class="card__meta mono">folzy.is-a.dev</span>
+          </a>
+        </div>
+
+        <div class="panel donate reveal">
+          <div class="donate__text">
+            <span class="badge-ico"><svg class="ico"><use href="#i-gift"/></svg></span>
+            <div>
+              <h3>Поддержать</h3>
+              <p>Если что-то из моего пригодилось.</p>
+            </div>
+          </div>
+          <div class="donate__actions">
+            <a class="btn btn--ghost btn--sm" href="https://www.donationalerts.com/r/folzy" target="_blank" rel="noopener">DonationAlerts<svg class="ico"><use href="#i-arrow"/></svg></a>
+            <button class="btn btn--ghost btn--sm" type="button" data-copy="TEUiGjTqJmhSj7nEQEBtGF7h4J6ZTTKddr" data-copy-label="Адрес USDT (TRC20)"><svg class="ico"><use href="#i-copy"/></svg>USDT TRC20</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-copy="UQCLhm1hTZT5mu0gUCQHLel6lZOzLFmd0BulsdkQie86kz-e" data-copy-label="Адрес TON"><svg class="ico"><use href="#i-copy"/></svg>TON</button>
+            <a class="btn btn--ghost btn--sm" href="https://t.me/FolzyManagebot" target="_blank" rel="noopener"><svg class="ico"><use href="#i-star"/></svg>Telegram Stars</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <span>Folzy · Рига</span>
+      <span class="mono">folzy.ru</span>
     </div>
-
-    <div id="toast" class="toast">
-    </div>
-
-    <script>
-    // Единый набор line-иконок (stroke=currentColor, в одном стиле со счётчиком).
-    const _svg = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
-    const ICON_SVG = {
-        '💬': _svg('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'),
-        '📱': _svg('<path d="M3 11l18-5v12L3 14z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>'),
-        '⚙️': _svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
-        '🎨': _svg('<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c.93 0 1.5-.75 1.5-1.5 0-.4-.16-.77-.42-1.05-.27-.28-.42-.62-.42-1.02 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6 0-4.96-4.48-8.93-10-8.93z"/>'),
-        '🗂': _svg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>'),
-    };
-
-    // Статичная копия настроек сайта (было в БД админки, бэкенд убран).
-    const siteSettings = {
-        music: { enabled: true, autoplay: true, show_player: false, volume: 0.35, fade_in_ms: 1000, track_name: "red lipstick + 2 lines", artist: "Овсянкин", url: "/static/track.mp3" },
-        rain: { enabled: true, count: 186 },
-        snow: { enabled: false, count: 100 },
-        background_url: "/static/photo_4.jpg",
-        buttons: [
-            { title: "Spamblock", url: "https://t.me/Folzy_questions_bot", icon: "💬" },
-            { title: "Channel", url: "https://t.me/+O8RIiGEYX400Yjky", icon: "📱" },
-            { title: "FolzySofts", url: "https://t.me/Folzy_soft", icon: "⚙️" },
-            { title: "Projects", url: "https://t.me/Folzyworks", icon: "🎨" },
-            { title: "Portfolio", url: "https://folzy.is-a.dev", icon: "🗂" }
-        ]
-    };
-
-    const FROZEN_VISITOR_COUNT = 312;
-
-    function applySettings() {
-        const audio = document.getElementById('background-audio');
-        const musicPlayer = document.getElementById('music-player');
-
-        if (!siteSettings.music.show_player) {
-            musicPlayer.style.display = 'none';
-        } else {
-            musicPlayer.style.display = 'flex';
-        }
-
-        if (!siteSettings.music.enabled) {
-            audio.pause();
-            audio.muted = true;
-        } else {
-            audio.muted = false;
-            if (siteSettings.music.url) {
-                const configuredUrl = new URL(siteSettings.music.url, window.location.href).href;
-                if (audio.src !== configuredUrl) audio.src = configuredUrl;
-            }
-        }
-
-        if (siteSettings.music.track_name) document.getElementById('track-name').textContent = siteSettings.music.track_name;
-        if (siteSettings.music.artist) document.getElementById('track-artist').textContent = siteSettings.music.artist;
-
-        if (siteSettings.background_url) {
-            const rainBg = document.getElementById('rain-background');
-            if (rainBg) {
-                rainBg.style.backgroundImage = `url('${siteSettings.background_url}')`;
-            }
-        }
-
-        const btnContainer = document.getElementById('main-buttons-container');
-        if (btnContainer && siteSettings.buttons) {
-            btnContainer.innerHTML = '';
-            siteSettings.buttons.forEach(btn => {
-                const a = document.createElement('a');
-                a.href = btn.url;
-                a.className = 'btn';
-                a.target = '_blank';
-                const icon = document.createElement('span');
-                const svg = ICON_SVG[(btn.icon || '').trim()];
-                if (svg) {
-                    icon.innerHTML = svg;
-                } else {
-                    icon.textContent = btn.icon || '';
-                }
-                a.appendChild(icon);
-                a.appendChild(document.createTextNode(btn.title || ''));
-                btnContainer.appendChild(a);
-            });
-        }
-        updateSnowflakes();
-        updateRaindrops();
-    }
-
-    function updateSnowflakes() {
-        const container = document.getElementById('snow-container');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        if (!siteSettings.snow.enabled) return;
-
-        const flakesCount = siteSettings.snow.count;
-
-        for (let i = 0; i < flakesCount; i++) {
-            const flake = document.createElement('div');
-            flake.classList.add('snowflake');
-            flake.innerHTML = '❄';
-
-            flake.style.left = Math.random() * 100 + 'vw';
-
-            const duration = Math.random() * 8 + 7 + 's';
-            const delay = -(Math.random() * 15) + 's';
-
-            flake.style.animationDuration = `${duration}, 3s`;
-            flake.style.animationDelay = `${delay}, ${delay}`;
-
-            flake.style.fontSize = Math.random() * 12 + 10 + 'px';
-            flake.style.opacity = Math.random() * 0.4 + 0.1;
-
-            container.appendChild(flake);
-        }
-    }
-
-    // Canvas Rain System
-    let rainCanvas, rainCtx;
-    let raindrops = [];
-    let rainAnimationId = null;
-
-    function initRainCanvas() {
-        rainCanvas = document.getElementById('rain-canvas');
-        rainCtx = rainCanvas.getContext('2d', { alpha: true });
-        resizeRainCanvas();
-        window.addEventListener('resize', resizeRainCanvas);
-    }
-
-    function resizeRainCanvas() {
-        rainCanvas.width = window.innerWidth;
-        rainCanvas.height = window.innerHeight;
-        updateRaindrops();
-    }
-
-    function updateRaindrops() {
-        raindrops = [];
-        const raindropsCount = siteSettings.rain.enabled ? siteSettings.rain.count : 0;
-
-        for (let i = 0; i < raindropsCount; i++) {
-            const width = 2 + Math.random() * 4;
-            const height = width * (2 + Math.random() * 3);
-            raindrops.push({
-                x: Math.random() * rainCanvas.width,
-                y: Math.random() * rainCanvas.height - rainCanvas.height,
-                width: width,
-                height: height,
-                speed: 8 + Math.random() * 6,
-                opacity: 0.4 + Math.random() * 0.4
-            });
-        }
-
-        if (raindropsCount > 0 && !rainAnimationId) {
-            animateRain();
-        } else if (raindropsCount === 0 && rainAnimationId) {
-            cancelAnimationFrame(rainAnimationId);
-            rainAnimationId = null;
-            rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
-        }
-    }
-
-    function animateRain() {
-        rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
-
-        for (let drop of raindrops) {
-            rainCtx.fillStyle = `rgba(200, 200, 200, ${drop.opacity * 0.3})`;
-            rainCtx.beginPath();
-            rainCtx.ellipse(drop.x, drop.y, drop.width / 2, drop.height / 2, Math.PI, 0, Math.PI * 2);
-            rainCtx.fill();
-
-            rainCtx.strokeStyle = `rgba(255, 255, 255, ${drop.opacity * 0.15})`;
-            rainCtx.lineWidth = 0.5;
-            rainCtx.beginPath();
-            rainCtx.ellipse(drop.x + 0.5, drop.y + 0.5, (drop.width - 1) / 2, (drop.height - 1) / 2, Math.PI, 0, Math.PI * 2);
-            rainCtx.stroke();
-
-            drop.y += drop.speed;
-
-            if (drop.y > rainCanvas.height + 50) {
-                drop.y = -50;
-                drop.x = Math.random() * rainCanvas.width;
-            }
-        }
-
-        rainAnimationId = requestAnimationFrame(animateRain);
-    }
-
-    function animateCounter(targetValue) {
-        const counterElement = document.getElementById('visitor-count');
-        const currentValue = parseInt(counterElement.textContent) || 0;
-        if (currentValue === targetValue) return;
-        const duration = 1000;
-        const steps = 30;
-        const increment = (targetValue - currentValue) / steps;
-        let step = 0;
-        counterElement.classList.add('animate');
-        const timer = setInterval(() => {
-            step++;
-            const newValue = Math.round(currentValue + (increment * step));
-            counterElement.textContent = newValue;
-            if (step >= steps) {
-                counterElement.textContent = targetValue;
-                clearInterval(timer);
-                setTimeout(() => counterElement.classList.remove('animate'), 500);
-            }
-        }, duration / steps);
-    }
-
-    function loadCounter() {
-        animateCounter(FROZEN_VISITOR_COUNT);
-    }
-
-    function loadLogoImage(logoId, logoSrc) {
-        const logoElement = document.getElementById(logoId);
-        const img = new Image();
-        img.onload = () => logoElement.classList.remove('loading');
-        img.onerror = () => logoElement.classList.remove('loading');
-        img.src = logoSrc;
-    }
-
-    function loadTechIcons() {
-        const icons = document.querySelectorAll('.tech-icon img');
-        const iconSrcs = [
-            '/static/python.webp',
-            '/static/c.webp',
-            '/static/javascript.webp',
-            '/static/html.webp',
-            '/static/css.webp',
-            '/static/tg.webp'
-        ];
-        icons.forEach((iconImg, index) => {
-            const img = new Image();
-            img.src = iconSrcs[index];
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        initRainCanvas();
-        applySettings();
-        loadLogoImage('main-logo', '/static/bmw.gif');
-        loadLogoImage('donate-logo', '/static/bmw.gif');
-        loadTechIcons();
-        loadCounter();
-    });
-
-    function switchCard(view) {
-        const mainCard = document.getElementById('main-card');
-        const donateCard = document.getElementById('donate-card');
-
-        if (window.innerWidth <= 768) {
-            if (view === 'donate') {
-                mainCard.classList.remove('card-active');
-                mainCard.classList.add('card-hidden');
-                donateCard.classList.remove('card-hidden');
-                donateCard.classList.add('card-active');
-            } else {
-                donateCard.classList.remove('card-active');
-                donateCard.classList.add('card-hidden');
-                mainCard.classList.remove('card-hidden');
-                mainCard.classList.add('card-active');
-            }
-            return;
-        }
-
-        if (view === 'donate') {
-            mainCard.classList.remove('card-active');
-            mainCard.classList.add('card-hidden');
-            setTimeout(() => {
-                donateCard.classList.remove('card-hidden');
-                donateCard.classList.add('card-active');
-            }, 100);
-        } else {
-            donateCard.classList.remove('card-active');
-            donateCard.classList.add('card-hidden');
-            setTimeout(() => {
-                mainCard.classList.remove('card-hidden');
-                mainCard.classList.add('card-active');
-            }, 100);
-        }
-    }
-
-    function copyCrypto(type) {
-        const addresses = { TRC20: "TEUiGjTqJmhSj7nEQEBtGF7h4J6ZTTKddr", TON: "UQCLhm1hTZT5mu0gUCQHLel6lZOzLFmd0BulsdkQie86kz-e" };
-        const labels = { TRC20: "USDT (TRC20)", TON: "TON" };
-        const addressToCopy = addresses[type];
-        const label = labels[type];
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(addressToCopy).then(() => showToast(label)).catch(err => fallbackCopyTextToClipboard(addressToCopy, label));
-        } else {
-            fallbackCopyTextToClipboard(addressToCopy, label);
-        }
-    }
-
-    function fallbackCopyTextToClipboard(text, label) {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        textArea.style.position = "fixed";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-            if (document.execCommand('copy')) showToast(label);
-            else showToast('Ошибка копирования', true);
-        } catch (err) { showToast('Ошибка копирования', true); }
-        document.body.removeChild(textArea);
-    }
-
-    function showToast(label, isError = false) {
-        const toast = document.getElementById('toast');
-        if (toast) {
-            toast.innerHTML = (isError ? `<span class="toast-icon">⚠</span> ${label}` : `<span class="toast-icon">✓</span> Адрес ${label} скопирован`);
-            toast.className = 'toast show ' + (isError ? 'error' : '');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-    }
-
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('dragstart', e => e.preventDefault());
-
-    const audio = document.getElementById('background-audio');
-    const playBtn = document.getElementById('play-btn');
-    const playIcon = document.getElementById('play-icon');
-    const progressFill = document.getElementById('progress-fill');
-    const currentTimeDisplay = document.getElementById('current-time');
-    const durationDisplay = document.getElementById('duration');
-    const volumeSlider = document.getElementById('volume-slider');
-    const musicPlayer = document.getElementById('music-player');
-    const volumeIconEl = document.getElementById('volume-icon');
-
-    let isMinimized = true;
-    let volumeFadeFrame = null;
-    const defaultVolume = Math.max(0, Math.min(1, siteSettings.music.volume ?? 0.35));
-    volumeSlider.value = Math.round(defaultVolume * 100);
-    audio.volume = 0;
-
-    function fadeAudioTo(targetVolume = defaultVolume, duration = siteSettings.music.fade_in_ms ?? 1000) {
-        if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
-        const target = Math.max(0, Math.min(1, targetVolume));
-        const startVolume = audio.volume;
-        const startTime = performance.now();
-
-        if (duration <= 0 || Math.abs(target - startVolume) < 0.001) {
-            audio.volume = target;
-            updateVolumeIcon();
-            return;
-        }
-
-        function step(now) {
-            const progress = Math.min(1, (now - startTime) / duration);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            audio.volume = startVolume + (target - startVolume) * eased;
-            updateVolumeIcon();
-            if (progress < 1) volumeFadeFrame = requestAnimationFrame(step);
-            else volumeFadeFrame = null;
-        }
-
-        volumeFadeFrame = requestAnimationFrame(step);
-    }
-
-    function playWithFade() {
-        audio.volume = 0;
-        updateVolumeIcon();
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            return playPromise.then(() => {
-                fadeAudioTo(defaultVolume);
-                updatePlayIcon(true);
-            });
-        }
-        fadeAudioTo(defaultVolume);
-        updatePlayIcon(true);
-        return Promise.resolve();
-    }
-
-    let audioUnlockArmed = false;
-
-    function removeAudioUnlockListeners() {
-        if (!audioUnlockArmed) return;
-        audioUnlockArmed = false;
-        document.removeEventListener('pointerdown', unlockAudioFromGesture, true);
-        document.removeEventListener('touchstart', unlockAudioFromGesture, true);
-        document.removeEventListener('keydown', unlockAudioFromGesture, true);
-    }
-
-    function unlockAudioFromGesture() {
-        if (!siteSettings.music.enabled || !audio.paused) {
-            removeAudioUnlockListeners();
-            return;
-        }
-        playWithFade()
-            .then(removeAudioUnlockListeners)
-            .catch(() => {});
-    }
-
-    function armAudioUnlock() {
-        if (audioUnlockArmed || !siteSettings.music.enabled) return;
-        audioUnlockArmed = true;
-        document.addEventListener('pointerdown', unlockAudioFromGesture, true);
-        document.addEventListener('touchstart', unlockAudioFromGesture, true);
-        document.addEventListener('keydown', unlockAudioFromGesture, true);
-    }
-
-    armAudioUnlock();
-
-    window.addEventListener('load', () => {
-        if (siteSettings.music.enabled && siteSettings.music.autoplay && audio.paused) {
-            playWithFade()
-                .then(removeAudioUnlockListeners)
-                .catch(() => {
-                    console.log('Autoplay prevented; waiting for user interaction');
-                    armAudioUnlock();
-                });
-        }
-    });
-
-    audio.addEventListener('timeupdate', () => {
-        const progress = (audio.currentTime / audio.duration) * 100;
-        progressFill.style.width = progress + '%';
-        currentTimeDisplay.textContent = formatTime(audio.currentTime);
-    });
-
-    audio.addEventListener('loadedmetadata', () => durationDisplay.textContent = formatTime(audio.duration));
-    audio.addEventListener('ended', () => { audio.currentTime = 0; audio.play(); });
-
-    function updatePlayIcon(isPlaying) {
-        playIcon.innerHTML = isPlaying ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
-    }
-
-    function togglePlay() {
-        if (audio.paused) {
-            playWithFade().catch(() => {});
-        } else {
-            if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
-            volumeFadeFrame = null;
-            audio.pause();
-            updatePlayIcon(false);
-        }
-    }
-
-    function skipBackward() { audio.currentTime = Math.max(0, audio.currentTime - 10); }
-    function skipForward() { audio.currentTime = Math.min(audio.duration, audio.currentTime + 10); }
-
-    function seekAudio(event) {
-        const progressBar = document.getElementById('progress-bar');
-        const rect = progressBar.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        audio.currentTime = (clickX / rect.width) * audio.duration;
-    }
-
-    function changeVolume(value) {
-        if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
-        volumeFadeFrame = null;
-        audio.volume = value / 100;
-        updateVolumeIcon();
-    }
-
-    function toggleMute() {
-        if (volumeFadeFrame) cancelAnimationFrame(volumeFadeFrame);
-        volumeFadeFrame = null;
-        if (audio.volume > 0) {
-            audio.dataset.previousVolume = audio.volume;
-            audio.volume = 0;
-            volumeSlider.value = 0;
-        } else {
-            const previousVolume = audio.dataset.previousVolume || defaultVolume;
-            audio.volume = previousVolume;
-            volumeSlider.value = previousVolume * 100;
-        }
-        updateVolumeIcon();
-    }
-
-    function updateVolumeIcon() {
-        const svg = volumeIconEl.querySelector('svg');
-        if (audio.volume === 0) svg.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
-        else if (audio.volume < 0.3) svg.innerHTML = '<path d="M7 9v6h4l5 5V4l-5 5H7z"/>';
-        else if (audio.volume < 0.7) svg.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>';
-        else svg.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
-    }
-
-    function toggleMinimize() {
-        isMinimized = !isMinimized;
-        musicPlayer.classList.toggle('minimized', isMinimized);
-    }
-
-    musicPlayer.addEventListener('click', (e) => {
-        if (isMinimized && !e.target.classList.contains('minimize-btn')) toggleMinimize();
-    });
-
-    function formatTime(seconds) {
-        if (isNaN(seconds)) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-    </script>
-    <script>
-    // Уведомление о заходе (Telegram через Cloudflare Worker, токен на сайте не хранится)
-    (function () {
-        var WORKER_URL = 'https://folzy-visit-notify.denisvasilev817.workers.dev';
-        if (WORKER_URL.indexOf('CHANGE-ME') !== -1) return;
-        try {
-            var last = +localStorage.getItem('visit_notified') || 0;
-            if (Date.now() - last < 30 * 60 * 1000) return;
-            localStorage.setItem('visit_notified', Date.now());
-        } catch (e) {}
-        fetch(WORKER_URL, {
-            method: 'POST',
-            keepalive: true,
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                page: location.pathname + location.search,
-                referrer: document.referrer,
-                lang: navigator.language,
-                screen: screen.width + 'x' + screen.height,
-                tz: Intl.DateTimeFormat().resolvedOptions().timeZone
-            })
-        }).catch(function () {});
-    })();
-    </script>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  // Уведомление о заходе (Telegram через Cloudflare Worker notify-worker/, токен на сайте не хранится)
+  (function () {
+    var WORKER_URL = 'https://folzy-visit-notify.denisvasilev817.workers.dev';
+    if (WORKER_URL.indexOf('CHANGE-ME') !== -1) return;
+    try {
+      var last = +localStorage.getItem('visit_notified') || 0;
+      if (Date.now() - last < 30 * 60 * 1000) return;
+      localStorage.setItem('visit_notified', Date.now());
+    } catch (e) {}
+    fetch(WORKER_URL, {
+      method: 'POST',
+      keepalive: true,
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        page: location.pathname + location.search,
+        referrer: document.referrer,
+        lang: navigator.language,
+        screen: screen.width + 'x' + screen.height,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+      })
+    }).catch(function () {});
+  })();
+  </script>
 </body>
 </html>

@@ -1,0 +1,26 @@
+name = "folzy-music"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+LASTFM_USER = "wxnna_cry"
+TIMEZONE = "Europe/Riga"
+
+# «Сейчас играет» от selfbot. SQLite-класс — работает и на бесплатном плане.
+[[durable_objects.bindings]]
+name = "NOW"
+class_name = "NowState"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NowState"]
+
+# Кэш длительностей треков и статистики. Создать: npx wrangler kv namespace create CACHE
+# и вписать сюда выданный id. Без KV воркер тоже работает, но время считает грубее.
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "..."
+
+# Секреты — не сюда, а командами:
+#   npx wrangler secret put LASTFM_API_KEY   ключ Last.fm
+#   npx wrangler secret put PUSH_TOKEN       общий токен с selfbot (SITE_PUSH_TOKEN в .env бота)
