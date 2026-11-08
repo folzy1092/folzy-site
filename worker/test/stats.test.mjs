@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { NowState, boundaries, cleanTrack, computeStats, cover, fromPush, rememberCovers, toTrack, withCovers } from '../src/index.js';
+import worker, { NowState, artwork, boundaries, cleanTrack, computeStats, cover, fromPush, pickScTrack, rememberCovers, toTrack, withCovers } from '../src/index.js';
+
+// тесты без сети: всё, что не подменено в самом тесте, получает 404
+globalThis.fetch = async () => new Response('', { status: 404 });
 
 const TZ = 'Europe/Riga';
 // воскресенье, 8 ноября 2026, 23:30 по Риге (UTC+2)
@@ -195,4 +198,66 @@ test('обложка из пуша бота попадает в ответ из 
   } finally {
     globalThis.fetch = original;
   }
+});
+
+// ── SoundCloud ──
+
+const scResults = [
+  { title: 'de_survivor onda andar (instrumental)', user: { username: 'lokep23' }, artwork_url: 'https://i1.sndcdn.com/artworks-x-large.jpg', permalink_url: 'https://soundcloud.com/m/x' },
+  { title: 'de_survivor', user: { username: 'ONDA ANDAR' }, publisher_metadata: { artist: 'ONDA ANDAR' }, artwork_url: 'https://i1.sndcdn.com/artworks-VClI-large.png', permalink_url: 'https://soundcloud.com/onda_andar/de_survivor-9' },
+];
+
+test('SoundCloud: берётся трек с тем же названием и автором, обложка 500x500', () => {
+  const r = pickScTrack(scResults, 'onda andar', 'de_survivor');
+  assert.equal(r.cover, 'https://i1.sndcdn.com/artworks-VClI-t500x500.png');
+  assert.equal(r.link, 'https://soundcloud.com/onda_andar/de_survivor-9');
+  assert.equal(pickScTrack(scResults, 'onda andar', 'совсем другое'), null);
+  assert.equal(artwork({ user: { avatar_url: 'https://i1.sndcdn.com/avatars-a-large.jpg' } }), 'https://i1.sndcdn.com/avatars-a-t500x500.jpg');
+});
+
+test('SoundCloud: client_id со страницы, поиск, кэш и «не нашли» без повторных запросов', async () => {
+  const env = { CACHE: fakeKv() };
+  const calls = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    url = String(url);
+    calls.push(url.split('?')[0]);
+    if (url === 'https://soundcloud.com/') return new Response('<script crossorigin src="https://a-v2.sndcdn.com/assets/1.js"></script>');
+    if (url.endsWith('/1.js')) return new Response('x={client_id:"abcdefghijklmnopqrstuvwxyz012345"}');
+    if (url.includes('search/tracks')) {
+      assert.match(url, /client_id=abcdefghijklmnopqrstuvwxyz012345/);
+      return new Response(JSON.stringify({ collection: url.includes('de_survivor') ? scResults : [] }));
+    }
+    throw new Error(`лишний запрос ${url}`);
+  };
+  try {
+    const top = [
+      { title: 'de_survivor', artist: 'onda andar', cover: null, link: 'https://soundcloud.com/search?q=x' },
+      { title: 'нет такого', artist: 'никто', cover: null, link: 'https://soundcloud.com/search?q=y' },
+    ];
+    await withCovers(env, top);
+    assert.equal(top[0].cover, 'https://i1.sndcdn.com/artworks-VClI-t500x500.png');
+    assert.equal(top[0].link, 'https://soundcloud.com/onda_andar/de_survivor-9');
+    assert.equal(top[1].cover, null);
+    assert.equal(top[1].link, 'https://soundcloud.com/search?q=y');
+    const before = calls.length;
+    await withCovers(env, [{ ...top[0], cover: null }, { ...top[1] }]);     // всё из кэша
+    assert.equal(calls.length, before);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('SoundCloud: обложка от бота важнее найденной, ссылка — прямая', async () => {
+  const env = { CACHE: fakeKv() };
+  await env.CACHE.put('cover:onda andar|de_survivor', 'https://bot/cover.jpg');
+  await env.CACHE.put('sc:onda andar|de_survivor', JSON.stringify({ cover: 'https://sc/cover.jpg', link: 'https://soundcloud.com/onda_andar/de_survivor-9' }));
+  const [t] = await withCovers(env, [{ title: 'de_survivor', artist: 'onda andar', cover: null, link: '' }]);
+  assert.equal(t.cover, 'https://bot/cover.jpg');
+  assert.equal(t.link, 'https://soundcloud.com/onda_andar/de_survivor-9');
+});
+
+test('song.link с SoundCloud внутри разворачивается в прямую ссылку', () => {
+  assert.equal(cleanTrack({ title: 'X', link: 'https://song.link/https://soundcloud.com/onda_andar/x' }).link, 'https://soundcloud.com/onda_andar/x');
+  assert.equal(cleanTrack({ title: 'X', link: 'https://song.link/ya/123' }).link, 'https://song.link/ya/123');
 });

@@ -21,12 +21,15 @@ const API = 'https://ws.audioscrobbler.com/2.0/';
 const PLACEHOLDER_IMAGE = '2a96cbd8b46e442fc41c2b86b821562f';
 const DEFAULT_DURATION = 180;
 const MAX_PAGES = 8;            // 8 × 200 = 1600 скробблов за месяц, хватает с запасом
-const DURATION_BUDGET = 30;     // лимит воркера — 50 подзапросов, страницы скробблов тоже считаются
+const DURATION_BUDGET = 20;     // лимит воркера — 50 подзапросов: страницы скробблов (≤8) + это + SoundCloud (≤11)
 const NOW_TTL = 15;
 const STATS_TTL = 600;
 const TOP_LIMIT = 6;
 const PUSH_FRESH = 180;         // бот шлёт пульс раз в минуту; три пропуска — считаем, что он лежит
 const COVER_TTL = 60 * 60 * 24 * 180;   // обложка от бота живёт в KV полгода с последнего обновления
+const SC_MISS_TTL = 60 * 60 * 24 * 7;   // в SoundCloud не нашли — повторим поиск через неделю
+const SC_ID_TTL = 60 * 60 * 24;         // client_id SoundCloud перечитываем раз в сутки
+const SC_SCRIPTS = 4;                   // client_id лежит в последних бандлах soundcloud.com
 
 const memory = new Map();       // запасной кэш, если KV не привязан
 
@@ -59,11 +62,11 @@ export default {
     }
     try {
       if (path === '/now') return json(await now(env), 200, 5);
-      if (path === '/stats') return json(await cached(env, 'stats:v1', STATS_TTL, () => stats(env, ctx)), 200, 60);
+      if (path === '/stats') return json(await cached(env, 'stats:v2', STATS_TTL, () => stats(env, ctx)), 200, 60);
       if (path === '/') {
         const [n, st] = await Promise.all([
           now(env),
-          cached(env, 'stats:v1', STATS_TTL, () => stats(env, ctx)),
+          cached(env, 'stats:v2', STATS_TTL, () => stats(env, ctx)),
         ]);
         return json({ now: n, stats: st }, 200, 5);
       }
@@ -95,7 +98,8 @@ export function cleanTrack(raw) {
   const title = text(raw.title);
   const artist = text(raw.artist);
   if (!title) return null;
-  const link = text(raw.link, 600);
+  // бот шлёт song.link для поста канала; кнопка на сайте — «Открыть в SoundCloud», поэтому разворачиваем
+  const link = text(raw.link, 600).replace(/^https:\/\/song\.link\/(?=https:\/\/(on\.)?soundcloud\.com\/)/, '');
   const cover = text(raw.cover, 600);
   return {
     title,
@@ -144,11 +148,99 @@ export async function rememberCovers(env, tracks) {
   }
 }
 
+// Обложка: от бота (cover:*), иначе из SoundCloud (sc:*, поиск по «артист название»).
+// Найденный в SoundCloud трек заодно даёт прямую ссылку вместо ссылки на поиск.
 export async function withCovers(env, tracks) {
   await Promise.all(tracks.map(async (t) => {
-    if (t && !t.cover) t.cover = (await kvGet(env, coverKey(t))) || null;
+    if (!t) return;
+    if (!t.cover) t.cover = (await kvGet(env, coverKey(t))) || null;
+    const sc = await scTrack(env, t.artist, t.title).catch(() => null);
+    if (!sc) return;
+    if (!t.cover) t.cover = sc.cover;
+    if (sc.link) t.link = sc.link;
   }));
   return tracks;
+}
+
+// ── SoundCloud ──────────────────────────────────────────────────────────
+
+const SC_SCRIPT_RE = /<script[^>]+src="(https:\/\/a-v2\.sndcdn\.com\/assets\/[^"]+\.js)"/g;
+const SC_CLIENT_ID_RE = /client_id\s*[:=]\s*["']([A-Za-z0-9]{32})["']/;
+const SC_HEADERS = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36' };
+
+// client_id нет в официальном API: берём из js-бандлов soundcloud.com, как selfbot (sc_api.py)
+async function scClientId(env, fresh = false) {
+  if (!fresh) {
+    const cachedId = await kvGet(env, 'sc:client_id');
+    if (cachedId) return cachedId;
+  }
+  const page = await (await fetch('https://soundcloud.com/', { headers: SC_HEADERS })).text();
+  const scripts = [...page.matchAll(SC_SCRIPT_RE)].map((m) => m[1]).reverse().slice(0, SC_SCRIPTS);
+  for (const src of scripts) {
+    const found = (await (await fetch(src, { headers: SC_HEADERS })).text()).match(SC_CLIENT_ID_RE);
+    if (found) {
+      await kvPut(env, 'sc:client_id', found[1], SC_ID_TTL);
+      return found[1];
+    }
+  }
+  throw new Error('SoundCloud: client_id не найден');
+}
+
+function norm(s) {
+  return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+export function artwork(t) {
+  const src = t.artwork_url || (t.user && t.user.avatar_url) || '';
+  return src ? src.replace(/-large(\.\w+)$/, '-t500x500$1') : null;
+}
+
+// Лучший результат поиска: название совпадает (или одно содержит другое), бонус за автора.
+// Без совпадения названия — ничего: чужая обложка хуже пустой.
+export function pickScTrack(results, artist, title) {
+  const nt = norm(title);
+  const na = norm(artist);
+  let best = null;
+  let bestScore = 0;
+  for (const t of results || []) {
+    const tt = norm(t.title);
+    if (!tt || !nt) continue;
+    const titleScore = tt === nt ? 4 : (tt.includes(nt) || nt.includes(tt)) ? 2 : 0;
+    if (!titleScore) continue;
+    const authors = [t.user && t.user.username, t.publisher_metadata && t.publisher_metadata.artist].map(norm);
+    const artistScore = authors.some((a) => a && (a === na || (na && (a.includes(na) || na.includes(a))))) ? 3 : 0;
+    const score = titleScore + artistScore;
+    if (score > bestScore) {
+      best = t;
+      bestScore = score;
+    }
+  }
+  return best ? { cover: artwork(best), link: best.permalink_url || null } : null;
+}
+
+async function scSearch(env, query) {
+  for (const fresh of [false, true]) {
+    const id = await scClientId(env, fresh);
+    const url = `https://api-v2.soundcloud.com/search/tracks?q=${encodeURIComponent(query)}&limit=10&client_id=${id}`;
+    const res = await fetch(url, { headers: SC_HEADERS });
+    if (res.status === 401 || res.status === 403) continue;      // client_id сменился — берём свежий
+    if (!res.ok) throw new Error(`SoundCloud search: ${res.status}`);
+    return (await res.json()).collection || [];
+  }
+  throw new Error('SoundCloud: client_id не принят');
+}
+
+// {cover, link} из кэша или поиска; null — не нашли (запоминаем на неделю)
+async function scTrack(env, artist, title) {
+  const key = `sc:${trackKey(artist, title)}`;
+  const hit = await kvGet(env, key);
+  if (hit !== null) {
+    const value = JSON.parse(hit);
+    return value.none ? null : value;
+  }
+  const found = pickScTrack(await scSearch(env, `${artist} ${title}`.trim()), artist, title);
+  await kvPut(env, key, JSON.stringify(found || { none: true }), found ? COVER_TTL : SC_MISS_TTL);
+  return found;
 }
 
 async function pushed(env) {
