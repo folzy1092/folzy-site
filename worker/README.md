@@ -19,21 +19,20 @@ Endpoint для блока «Сейчас играет» и статистики
 Время прослушивания — сумма длительностей треков. Длительности приходят из `track.getInfo` и копятся в KV;
 пока известны не все, остаток считается по медиане, и в ответе `estimated: true` (на сайте стоит «≈»).
 
-## Запуск
-
-Из папки `worker`:
+## Запуск одной командой
 
 ```bash
-npx wrangler login
-npx wrangler kv namespace create CACHE      # выданный id вписать в wrangler.toml
-npx wrangler secret put LASTFM_API_KEY      # тот же ключ, что у selfbot, или новый: last.fm/api/account/create
-npx wrangler secret put PUSH_TOKEN          # любая длинная случайная строка
-npx wrangler deploy
+cd worker
+npm run setup
 ```
 
-После деплоя:
-1. Адрес воркера вписать в `assets/js/config.js` сайта (`musicEndpoint`).
-2. В `.env` контейнера selfbot добавить `SITE_NOW_URL=<адрес воркера>/now` и `SITE_PUSH_TOKEN=<тот же PUSH_TOKEN>`,
-   перезапустить бота.
+`setup.mjs` сам: создаёт `PUSH_TOKEN` и показывает его вместе с ключом Last.fm, входит в Cloudflare
+(браузер), создаёт KV и вписывает id в `wrangler.toml`, деплоит воркер, кладёт секреты, проверяет
+`/now` и `/stats`, вписывает адрес в `assets/js/config.js` и пушит сайт. Потом через API панели
+Pterodactyl дописывает в `.env` контейнера `SITE_NOW_URL` и `SITE_PUSH_TOKEN` (копия до правки —
+`/.env.site-backup`) и по твоему «y» перезапускает сервер.
+
+Ключи ищет в переменных окружения, `../../selfbot/code/.env`, `../../lengu/.env` и `.env` на сервере;
+чего не нашёл — спросит.
 
 Тесты: `npm test`.
