@@ -6,7 +6,7 @@
 // PUSH_FRESH секунд (бот лежит, сервер перезапускается) — «сейчас играет» берётся из Last.fm.
 //
 // Статистика — из Last.fm (туда скробблит Dotify). Ключ LASTFM_API_KEY лежит в секретах воркера,
-// в браузер не уходит. Сутки, неделя и месяц считаются по времени TIMEZONE (по умолчанию Рига).
+// в браузер не уходит. Сутки, неделя и месяц считаются по времени TIMEZONE (по умолчанию МСК).
 //
 //   GET  /       → { now, stats }
 //   GET  /now    → что играет сейчас; у трека от бота есть duration и position (секунда на server_time)
@@ -332,7 +332,7 @@ export function computeStats(scrobbles, known, nowTs, tz) {
 }
 
 async function stats(env) {
-  const tz = env.TIMEZONE || 'Europe/Riga';
+  const tz = env.TIMEZONE || 'Europe/Moscow';
   const nowTs = Math.floor(Date.now() / 1000);
   const b = boundaries(nowTs, tz);
   const scrobbles = await fetchScrobbles(env, Math.min(b.week, b.month));

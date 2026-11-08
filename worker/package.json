@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/stats.test.mjs test/setup.test.mjs",
-    "setup": "node setup.mjs",
+    "test": "node --test test/stats.test.mjs && python -m unittest discover -s test -p test_*.py",
+    "setup": "python setup.py",
     "deploy": "npx wrangler deploy"
   }
 }

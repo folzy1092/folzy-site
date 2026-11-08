@@ -4,7 +4,7 @@ compatibility_date = "2026-11-01"
 
 [vars]
 LASTFM_USER = "wxnna_cry"
-TIMEZONE = "Europe/Riga"
+TIMEZONE = "Europe/Moscow"   # МСК, как в selfbot
 
 # «Сейчас играет» от selfbot. SQLite-класс — работает и на бесплатном плане.
 [[durable_objects.bindings]]

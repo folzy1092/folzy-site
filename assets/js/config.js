@@ -6,7 +6,8 @@ window.FOLZY = {
   // Адрес воркера из worker/ после `npx wrangler deploy`, например 'https://folzy-music.<имя>.workers.dev'.
   // Пусто — блок музыки честно пишет, что endpoint не подключён. Для превью вёрстки: ?demo в адресе.
   musicEndpoint: '',
-  timezone: 'Europe/Riga',
+  timezone: 'Europe/Moscow',
+  timezoneLabel: 'МСК',
   nowEvery: 10,        // секунд между запросами «сейчас играет» (трек меняет бот, ответ воркера — мгновенный)
   statsEvery: 300,     // секунд между запросами статистики
 };

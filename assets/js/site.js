@@ -1,7 +1,8 @@
 // Навигация, появление блоков, табы, часы, копирование, дождь в hero и айфон.
 (() => {
   const cfg = window.FOLZY || {};
-  const TZ = cfg.timezone || 'Europe/Riga';
+  const TZ = cfg.timezone || 'Europe/Moscow';
+  const TZ_LABEL = cfg.timezoneLabel || '';
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $ = (s, root = document) => root.querySelector(s);
   const $$ = (s, root = document) => [...root.querySelectorAll(s)];
@@ -107,8 +108,8 @@
   };
   const tick = () => {
     const now = new Date();
-    $$('[data-clock="short"]').forEach((el) => { el.textContent = `${hm.format(now)} · Рига, ${offset()}`; });
-    $$('[data-clock="full"]').forEach((el) => { el.textContent = hms.format(now); });
+    $$('[data-clock="short"]').forEach((el) => { el.textContent = `${hm.format(now)} · ${TZ_LABEL || offset()}`; });
+    $$('[data-clock="full"]').forEach((el) => { el.textContent = `${hms.format(now)}${TZ_LABEL ? ` ${TZ_LABEL}` : ''}`; });
     $$('[data-clock="lock"]').forEach((el) => { el.textContent = hm.format(now); });
     const d = $('#iphone-date');
     if (d) d.textContent = dateFmt.format(now);

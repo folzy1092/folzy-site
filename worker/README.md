@@ -15,7 +15,7 @@ Endpoint для блока «Сейчас играет» и статистики
 | `GET /stats`| `today`, `week`, `month`, `avg_day` (треки и секунды), `top`, `estimated`              | 10 мин |
 | `POST /now` | от selfbot, `Authorization: Bearer PUSH_TOKEN`                                         | —      |
 
-Сутки, неделя (с понедельника) и месяц считаются по `TIMEZONE` (Рига).
+Сутки, неделя (с понедельника) и месяц считаются по `TIMEZONE` (МСК, `Europe/Moscow`).
 Время прослушивания — сумма длительностей треков. Длительности приходят из `track.getInfo` и копятся в KV;
 пока известны не все, остаток считается по медиане, и в ответе `estimated: true` (на сайте стоит «≈»).
 
@@ -23,10 +23,10 @@ Endpoint для блока «Сейчас играет» и статистики
 
 ```bash
 cd worker
-npm run setup
+python setup.py
 ```
 
-`setup.mjs` сам: создаёт `PUSH_TOKEN` и показывает его вместе с ключом Last.fm, входит в Cloudflare
+`setup.py` сам (нужны Python 3.9+ и Node.js): создаёт `PUSH_TOKEN` и показывает его вместе с ключом Last.fm, входит в Cloudflare
 (браузер), создаёт KV и вписывает id в `wrangler.toml`, деплоит воркер, кладёт секреты, проверяет
 `/now` и `/stats`, вписывает адрес в `assets/js/config.js` и пушит сайт. Потом через API панели
 Pterodactyl дописывает в `.env` контейнера `SITE_NOW_URL` и `SITE_PUSH_TOKEN` (копия до правки —

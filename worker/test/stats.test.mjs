@@ -14,6 +14,14 @@ test('границы суток, недели и месяца считаются
   assert.equal(b.dayOfMonth, 8);
 });
 
+test('МСК: сутки с 00:00 по Москве (UTC+3, без перехода на летнее)', () => {
+  const b = boundaries(NOW, 'Europe/Moscow');                 // 9 ноя 00:30 по Москве
+  assert.equal(b.today, Date.UTC(2026, 10, 8, 21) / 1000);    // 9 ноя 00:00 МСК
+  assert.equal(b.week, Date.UTC(2026, 10, 8, 21) / 1000);     // понедельник 9 ноя
+  assert.equal(b.month, Date.UTC(2026, 9, 31, 21) / 1000);    // 1 ноя 00:00 МСК
+  assert.equal(b.dayOfMonth, 9);
+});
+
 test('летнее время: в июле Рига UTC+3', () => {
   const july = Date.UTC(2026, 6, 15, 12) / 1000;
   assert.equal(boundaries(july, TZ).today, Date.UTC(2026, 6, 14, 21) / 1000);
