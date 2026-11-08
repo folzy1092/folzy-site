@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { NowState, boundaries, cleanTrack, computeStats, cover, fromPush, toTrack } from '../src/index.js';
+import worker, { NowState, boundaries, cleanTrack, computeStats, cover, fromPush, rememberCovers, toTrack, withCovers } from '../src/index.js';
 
 const TZ = 'Europe/Riga';
 // воскресенье, 8 ноября 2026, 23:30 по Риге (UTC+2)
@@ -155,4 +155,44 @@ test('позиция не уходит за длительность', () => {
   const r = fromPush({ track: { title: 'T', duration: 100, position: 90, at: 900 }, received: 900 }, 1000);
   assert.equal(r.track.position, 100);
   assert.equal(r.track.at, undefined);
+});
+
+// KV в памяти
+function fakeKv() {
+  const store = new Map();
+  const writes = [];
+  return {
+    store, writes,
+    get: async (k, type) => { const v = store.get(k); return v === undefined ? null : (type === 'json' ? JSON.parse(v) : v); },
+    put: async (k, v) => { writes.push(k); store.set(k, v); },
+  };
+}
+
+test('обложки: запоминаются от бота, повторно не пишутся, подставляются по артисту и названию', async () => {
+  const env = { CACHE: fakeKv() };
+  const t = { title: 'Zombie', artist: 'cowboyclicker', cover: 'https://i1.sndcdn.com/z.jpg' };
+  await rememberCovers(env, [t, null, { title: 'x', artist: 'y', cover: null }]);
+  await rememberCovers(env, [t]);
+  assert.deepEqual(env.CACHE.writes, ['cover:cowboyclicker|zombie']);
+  const top = [{ title: 'zombie ', artist: 'CowboyClicker', cover: null }, { title: 'other', artist: 'z', cover: null }];
+  await withCovers(env, top);
+  assert.equal(top[0].cover, 'https://i1.sndcdn.com/z.jpg');
+  assert.equal(top[1].cover, null);
+});
+
+test('обложка из пуша бота попадает в ответ из Last.fm', async () => {
+  const env = { LASTFM_API_KEY: 'k', LASTFM_USER: 'covers-1', PUSH_TOKEN: 'secret', NOW: fakeNow(), CACHE: fakeKv() };
+  await push(env, { playing: true, track: { title: 'T', artist: 'A', cover: 'https://i/c.jpg', duration: 100, position: 1, at: Date.now() / 1000 } });
+  // бот замолчал надолго — ответ берётся из Last.fm, где обложки нет
+  await env.NOW.get().fetch('https://now/', { method: 'PUT', body: JSON.stringify({ playing: false, track: null, received: 1 }) });
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ recenttracks: { track: [
+    { name: 'T', artist: { '#text': 'A' }, '@attr': { nowplaying: 'true' }, image: [] }] } }));
+  try {
+    const body = await (await worker.fetch(new Request('https://w/now'), env, {})).json();
+    assert.equal(body.source, 'lastfm');
+    assert.equal(body.track.cover, 'https://i/c.jpg');
+  } finally {
+    globalThis.fetch = original;
+  }
 });

@@ -26,6 +26,7 @@ const NOW_TTL = 15;
 const STATS_TTL = 600;
 const TOP_LIMIT = 6;
 const PUSH_FRESH = 180;         // бот шлёт пульс раз в минуту; три пропуска — считаем, что он лежит
+const COVER_TTL = 60 * 60 * 24 * 180;   // обложка от бота живёт в KV полгода с последнего обновления
 
 const memory = new Map();       // запасной кэш, если KV не привязан
 
@@ -123,7 +124,31 @@ async function receivePush(request, env) {
     received: Math.floor(Date.now() / 1000),
   };
   await stub.fetch('https://now/', { method: 'PUT', body: JSON.stringify(state) });
+  await rememberCovers(env, [track, state.last]);
   return json({ ok: true });
+}
+
+// ── Обложки ─────────────────────────────────────────────────────────────
+// Last.fm для скробблов с SoundCloud обложек не отдаёт, а у бота (Dotify) они есть.
+// Запоминаем обложку по «артист|название» и подставляем в топ и в ответ из Last.fm.
+
+function coverKey(t) {
+  return `cover:${trackKey(t.artist, t.title)}`;
+}
+
+export async function rememberCovers(env, tracks) {
+  for (const t of tracks) {
+    if (!t || !t.cover) continue;
+    if ((await kvGet(env, coverKey(t))) === t.cover) continue;     // не тратим лимит записей KV
+    await kvPut(env, coverKey(t), t.cover, COVER_TTL);
+  }
+}
+
+export async function withCovers(env, tracks) {
+  await Promise.all(tracks.map(async (t) => {
+    if (t && !t.cover) t.cover = (await kvGet(env, coverKey(t))) || null;
+  }));
+  return tracks;
 }
 
 async function pushed(env) {
@@ -151,12 +176,21 @@ async function now(env) {
     const answer = fromPush(state, nowTs);
     if (!answer.last && !answer.playing) {
       const lastfm = await cached(env, `now:${env.LASTFM_USER}`, NOW_TTL, () => nowPlaying(env)).catch(() => null);
-      answer.last = lastfm && lastfm.last;
+      answer.last = lastfm && lastfm.last ? { ...lastfm.last } : null;
     }
+    await withCovers(env, [answer.track, answer.last]);
     return answer;
   }
   const lastfm = await cached(env, `now:${env.LASTFM_USER}`, NOW_TTL, () => nowPlaying(env));
-  return { ...lastfm, source: 'lastfm', server_time: nowTs };
+  const answer = {
+    ...lastfm,
+    track: lastfm.track && { ...lastfm.track },
+    last: lastfm.last && { ...lastfm.last },
+    source: 'lastfm',
+    server_time: nowTs,
+  };
+  await withCovers(env, [answer.track, answer.last]);
+  return answer;
 }
 
 // ── Last.fm ─────────────────────────────────────────────────────────────
@@ -337,7 +371,9 @@ async function stats(env) {
   const b = boundaries(nowTs, tz);
   const scrobbles = await fetchScrobbles(env, Math.min(b.week, b.month));
   const known = await durations(env, scrobbles);
-  return computeStats(scrobbles, known, nowTs, tz);
+  const result = computeStats(scrobbles, known, nowTs, tz);
+  await withCovers(env, result.top);
+  return result;
 }
 
 // ── Кэш и ответы ────────────────────────────────────────────────────────
