@@ -17,9 +17,9 @@ new_sqlite_classes = ["NowState"]
 
 # Кэш длительностей треков и статистики. Создать: npx wrangler kv namespace create CACHE
 # и вписать сюда выданный id. Без KV воркер тоже работает, но время считает грубее.
-# [[kv_namespaces]]
-# binding = "CACHE"
-# id = "..."
+[[kv_namespaces]]
+binding = "CACHE"
+id = "b80420e60264419a89b851c059e1f5ae"
 
 # Секреты — не сюда, а командами:
 #   npx wrangler secret put LASTFM_API_KEY   ключ Last.fm
