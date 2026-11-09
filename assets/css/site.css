@@ -1,10 +1,9 @@
-/* folzy.ru
-   Один спокойный серый мир: нейтральные поверхности, светлый текст, никаких цветных подсветок.
-   Живость — в форме и движении: углы карточек «дышат» при наведении и нажатии, клик даёт рябь,
-   фон — поле штрихов, как бороздки пластинки: у курсора они закручиваются, клик пускает звуковую волну.
-   Цвет один — оранжевый SoundCloud, только как знак «играет сейчас». Обои владельца — только на его айфоне.
-   Шрифты: Manrope — геометрический гротеск с кириллицей; JetBrains Mono — цифры и подписи (терминальный
-   стиль канала Folzy.bio()); Oswald — только узкие цифры часов на экране блокировки. */
+/* folzy.ru — в стиле iOS 27, Liquid Glass.
+   Поверхности — стекло: полупрозрачное, с размытием и насыщением того, что под ним, светлой кромкой сверху
+   и бликом, который идёт за курсором. В Chrome/Edge стекло ещё и преломляет фон (SVG-фильтр #lg-refract).
+   Фон — тёмная глубина из мягких графитовых и индиговых пятен (палитра обоев владельца); они плавно уходят
+   от курсора, как параллакс обоев на айфоне. Цвет один — оранжевый SoundCloud, только как знак «играет».
+   Шрифт: на устройствах Apple — системный SF Pro, у остальных Inter, самый близкий к нему открытый гротеск. */
 
 :root {
   --bg: #121212;
@@ -566,3 +565,157 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   .js .reveal { opacity: 1; transform: none; }
   .eq i { transform: scaleY(.7); }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   iOS 27 · Liquid Glass — слой поверх базовых правил
+   ══════════════════════════════════════════════════════════════════════ */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+  --bg: #08080b;
+  --text: #f2f2f7;
+  --muted: rgba(235, 235, 245, .62);
+  --faint: rgba(235, 235, 245, .48);
+  --line: rgba(255, 255, 255, .1);
+  --line-strong: rgba(255, 255, 255, .22);
+  --surface: rgba(255, 255, 255, .055);
+  --surface-2: rgba(255, 255, 255, .06);
+  --surface-3: rgba(255, 255, 255, .1);
+  --surface-4: rgba(255, 255, 255, .16);
+  --glass-blur: blur(26px) saturate(185%);
+  --r-xl: 30px;
+  --r-lg: 20px;
+}
+body { font-feature-settings: 'cv11', 'ss01'; letter-spacing: -0.006em; }
+h1, h2, h3 { letter-spacing: -0.025em; }
+.label, .section__num, .demo-note { font-family: var(--font); letter-spacing: 0; }
+.tile__value, .strip__value.mono, .top__plays, .progress__time, .fact dd.mono { font-family: var(--font); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ── Фон: глубина ── */
+.fx { display: none; }
+.ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: radial-gradient(120% 90% at 50% -10%, #15151d 0%, var(--bg) 60%); pointer-events: none; }
+.ambient i {
+  position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform;
+  transform: translate3d(var(--px, 0), var(--py, 0), 0);
+}
+.ambient__a { width: 62vmax; height: 62vmax; left: -18vmax; top: -22vmax; background: radial-gradient(circle, rgba(92, 100, 150, .42), transparent 65%); }
+.ambient__b { width: 54vmax; height: 54vmax; right: -20vmax; top: 6vmax; background: radial-gradient(circle, rgba(118, 96, 170, .26), transparent 65%); }
+.ambient__c { width: 48vmax; height: 48vmax; left: 18vmax; bottom: -26vmax; background: radial-gradient(circle, rgba(150, 156, 176, .16), transparent 65%); }
+.ambient__d { width: 30vmax; height: 30vmax; right: 8vmax; bottom: 4vmax; background: radial-gradient(circle, rgba(70, 120, 170, .16), transparent 65%); }
+
+/* ── Стекло ── */
+.glass, .panel, .card, .strip, .tabs, .spec, .nav__inner, .nav__online, .btn--ghost, .icon-btn, .tile, .top__row, .now__last, .chip, .badge-ico {
+  --lx: 30%; --ly: 0%;
+}
+.panel, .card, .strip, .tabs, .spec {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .075), rgba(255, 255, 255, .025)),
+    rgba(28, 28, 34, .38);
+  border: 1px solid rgba(255, 255, 255, .09);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .16),
+    inset 0 -1px 0 rgba(255, 255, 255, .04),
+    0 24px 50px -28px rgba(0, 0, 0, .75);
+}
+/* блик по кромке: светлая дуга там, где курсор (или сверху слева в покое) */
+.panel::before, .card::before, .strip::before, .spec::before, .tabs::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; padding: 1px;
+  background: radial-gradient(180px circle at var(--lx) var(--ly), rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: .55; transition: opacity .4s var(--ease);
+}
+.panel:hover::before, .card:hover::before, .strip:hover::before, .spec:hover::before { opacity: 1; }
+/* мягкий отсвет внутри стекла под курсором */
+.card, .strip { isolation: isolate; }
+.card::after, .strip::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background: radial-gradient(320px circle at var(--lx) var(--ly), rgba(255, 255, 255, .07), transparent 70%);
+  opacity: 0; transition: opacity .4s var(--ease);
+}
+.card:hover::after, .strip:hover::after { opacity: 1; }
+
+/* преломление — только у крупных «живых» поверхностей, чтобы не грузить страницу */
+@supports (backdrop-filter: url(#lg-refract)) {
+  .nav.is-scrolled .nav__inner, .now, .iphone__np { backdrop-filter: url(#lg-refract) blur(18px) saturate(190%); }
+}
+
+/* ── Навигация: плавающая стеклянная капсула ── */
+.nav { height: calc(var(--nav-h) + 12px); padding-top: 12px; }
+.nav.is-scrolled { background: none; border-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.nav__inner {
+  height: var(--nav-h); padding: 0 10px 0 22px; border-radius: 999px; border: 1px solid transparent;
+  transition: background-color .4s var(--ease), border-color .4s, box-shadow .4s, backdrop-filter .4s;
+}
+.nav.is-scrolled .nav__inner {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .03)), rgba(24, 24, 30, .42);
+  border-color: rgba(255, 255, 255, .12);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 16px 40px -18px rgba(0, 0, 0, .8);
+}
+.nav__pill { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
+.nav__online { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .1); }
+
+/* ── Кнопки: стеклянные капсулы, при нажатии «продавливаются» ── */
+.btn--ghost {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04));
+  border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22);
+  backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+.btn--ghost:hover { background: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .06)); border-color: rgba(255, 255, 255, .22); }
+.btn--light { background: #f5f5f7; box-shadow: inset 0 1px 0 #fff, 0 10px 24px -12px rgba(255, 255, 255, .35); }
+.btn:active, .btn:active.btn--ghost { transform: scale(.95); border-radius: 999px; }
+.icon-btn { background: rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14); border-radius: 50%; }
+.icon-btn:hover { background: rgba(255, 255, 255, .16); border-radius: 50%; }
+
+/* Нажатие — не рябь, а мягкое свечение в точке касания, как стекло в iOS */
+.ripple { background: radial-gradient(circle, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, .1) 35%, transparent 65%); animation-duration: .7s; }
+
+/* ── Карточки ── */
+.card { border-radius: var(--r-xl); transition: transform .5s var(--spring), border-color .3s, box-shadow .4s; }
+.card--link:hover { border-radius: var(--r-xl); transform: translateY(-4px) scale(1.01); border-color: rgba(255, 255, 255, .16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 34px 60px -30px rgba(0, 0, 0, .85); background:
+    linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .035)), rgba(30, 30, 38, .42); }
+.card--link:active { transform: scale(.975); border-radius: var(--r-xl); transition-duration: .18s; }
+.badge-ico { background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22); border-radius: 13px; }
+.card--link:hover .badge-ico { border-radius: 13px; background: #f5f5f7; color: #111; }
+.tabs { border-radius: 999px; }
+.tabs__pill { background: #f5f5f7; box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .6); }
+.tab:hover { background: rgba(255, 255, 255, .07); }
+.tile { background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .07); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07); }
+.top__row { background: rgba(255, 255, 255, .045); }
+.top__row:hover { background: rgba(255, 255, 255, .09); border-radius: 18px; }
+.now__last { background: rgba(255, 255, 255, .07); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
+.now__last:hover { border-radius: 20px; }
+.chip { background: rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
+.strip { border-radius: 24px; }
+.strip__item + .strip__item { border-color: rgba(255, 255, 255, .07); }
+a.strip__item:hover { background: rgba(255, 255, 255, .05); }
+.fact dl > div { border-color: rgba(255, 255, 255, .07); }
+.phone-stage { background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02)), rgba(28, 28, 34, .38); }
+.now::after { background: linear-gradient(180deg, rgba(14, 14, 20, .15) 0%, rgba(14, 14, 20, .7) 80%); }
+.footer__inner { border-color: rgba(255, 255, 255, .08); }
+
+/* ── Экран блокировки: без оператора и виджетов, плеер — Liquid Glass ── */
+.iphone__status { justify-content: flex-end; }
+.iphone__battery { width: 21px; min-width: 0; height: 10px; padding: 1.2px; background: none; border: 1px solid rgba(255, 255, 255, .5); border-radius: 3px; }
+.iphone__battery i { display: block; width: 72%; height: 100%; border-radius: 1.5px; background: #fff; }
+.iphone__np {
+  top: 61%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .05));
+  border: .5px solid rgba(255, 255, 255, .32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 1px rgba(255, 255, 255, .12), 0 10px 24px -14px rgba(0, 0, 0, .6);
+  backdrop-filter: blur(12px) saturate(200%); -webkit-backdrop-filter: blur(12px) saturate(200%);
+}
+.iphone__np::before {      /* блик стекла: светлая дуга по верхнему краю */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, .1) 100%);
+}
+.iphone__round {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .06));
+  border-color: rgba(255, 255, 255, .3); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4);
+}
+.iphone__time { top: 66px; }

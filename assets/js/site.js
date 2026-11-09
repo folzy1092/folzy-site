@@ -132,125 +132,47 @@
     toast(`${btn.dataset.copyLabel} скопирован`);
   }));
 
-  // ── Фон: поле штрихов, как бороздки пластинки ──
-  // В покое — неподвижный серый узор (рисуется один раз). У курсора штрихи закручиваются вокруг него
-  // и светлеют; клик пускает по полю «звуковую волну». Кадры идут только пока что-то движется, ≤ 30 fps.
-  const fx = $('#fx');
-  if (fx) {
-    const ctx = fx.getContext('2d');
-    const GAP = 24;
-    const LEN = 7;
-    const RADIUS = 230;
-    const WAVE_SPEED = 520;      // px/с
-    const WAVE_LIFE = 1.6;       // с
-    const LEVELS = 8;            // прозрачность квантуется: один путь на уровень, а не на штрих
-    let w = 0;
-    let h = 0;
-    let pts = [];
+  // ── Фон: глубина. Пятна плавно уходят от курсора (параллакс, как обои на айфоне) ──
+  // Кадры идут, только пока пятна догоняют цель; в покое — ни одного кадра.
+  const ambient = $('#ambient');
+  if (ambient && !reduced && matchMedia('(pointer: fine)').matches) {
+    const layers = [...ambient.children].map((el, k) => ({ el, depth: [36, -28, 22, -18][k] || 20, x: 0, y: 0 }));
+    const target = { x: 0, y: 0 };
     let raf = 0;
-    let lastFrame = 0;
-    const ptr = { x: -9999, y: -9999, tx: -9999, ty: -9999, on: 0, ton: 0 };
-    const waves = [];
-
-    const resize = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 2);
-      w = innerWidth;
-      h = innerHeight;
-      fx.width = Math.round(w * dpr);
-      fx.height = Math.round(h * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      pts = [];
-      for (let y = GAP / 2; y < h + GAP; y += GAP) {
-        for (let x = GAP / 2; x < w + GAP; x += GAP) {
-          // медленное поле направлений: плавные дуги, как бороздки
-          const a = Math.sin(x * 0.0042 + y * 0.0016) * 1.15 + Math.cos(y * 0.0051 - x * 0.0011) * 0.85;
-          pts.push(x, y, a);
-        }
-      }
-      draw(performance.now());
-    };
-
-    const draw = (now) => {
-      ctx.clearRect(0, 0, w, h);
-      const paths = Array.from({ length: LEVELS }, () => new Path2D());
-      const t = now / 1000;
-      for (let k = waves.length - 1; k >= 0; k--) if (t - waves[k].t > WAVE_LIFE) waves.splice(k, 1);
-      for (let i = 0; i < pts.length; i += 3) {
-        const x = pts[i];
-        const y = pts[i + 1];
-        let a = pts[i + 2];
-        let glow = 0;
-        let len = LEN;
-        if (ptr.on > 0.01) {
-          const dx = x - ptr.x;
-          const dy = y - ptr.y;
-          const d = Math.hypot(dx, dy);
-          if (d < RADIUS) {
-            const k = (1 - d / RADIUS) ** 2 * ptr.on;
-            const swirl = Math.atan2(dy, dx) + Math.PI / 2;           // касательная к окружности вокруг курсора
-            const da = Math.atan2(Math.sin(swirl - a), Math.cos(swirl - a));
-            a += da * k;
-            glow += k * 0.9;
-            len += k * 5;
-          }
-        }
-        for (const wv of waves) {
-          const age = t - wv.t;
-          const d = Math.hypot(x - wv.x, y - wv.y);
-          const band = Math.exp(-(((d - age * WAVE_SPEED) / 26) ** 2)) * (1 - age / WAVE_LIFE);
-          if (band > 0.02) {
-            glow += band;
-            len += band * 7;
-            a += band * 0.6;
-          }
-        }
-        const level = Math.min(LEVELS - 1, Math.floor(glow * (LEVELS - 1) + 0.0001));
-        const cx = Math.cos(a) * len / 2;
-        const cy = Math.sin(a) * len / 2;
-        paths[level].moveTo(x - cx, y - cy);
-        paths[level].lineTo(x + cx, y + cy);
-      }
-      ctx.lineCap = 'round';
-      ctx.lineWidth = 1.2;
-      paths.forEach((path, level) => {
-        ctx.strokeStyle = `rgba(230, 230, 230, ${(0.055 + (level / (LEVELS - 1)) * 0.3).toFixed(3)})`;
-        ctx.stroke(path);
-      });
-    };
-
-    const frame = (now) => {
+    const frame = () => {
       raf = 0;
-      if (now - lastFrame >= 33) {
-        lastFrame = now;
-        ptr.x += (ptr.tx - ptr.x) * 0.18;
-        ptr.y += (ptr.ty - ptr.y) * 0.18;
-        ptr.on += (ptr.ton - ptr.on) * 0.12;
-        draw(now);
+      let moving = false;
+      for (const l of layers) {
+        const tx = target.x * l.depth;
+        const ty = target.y * l.depth;
+        l.x += (tx - l.x) * 0.06;
+        l.y += (ty - l.y) * 0.06;
+        if (Math.abs(tx - l.x) + Math.abs(ty - l.y) > 0.2) moving = true;
+        l.el.style.setProperty('--px', `${l.x.toFixed(1)}px`);
+        l.el.style.setProperty('--py', `${l.y.toFixed(1)}px`);
       }
-      const moving = Math.abs(ptr.tx - ptr.x) + Math.abs(ptr.ty - ptr.y) > 0.5 || Math.abs(ptr.ton - ptr.on) > 0.01;
-      if (moving || waves.length) raf = requestAnimationFrame(frame);
+      if (moving) raf = requestAnimationFrame(frame);
     };
-    const wake = () => { if (!raf && !reduced) raf = requestAnimationFrame(frame); };
-
-    if (!reduced) {
-      addEventListener('pointermove', (e) => {
-        if (e.pointerType !== 'mouse') return;
-        if (ptr.on < 0.01) { ptr.x = e.clientX; ptr.y = e.clientY; }
-        ptr.tx = e.clientX;
-        ptr.ty = e.clientY;
-        ptr.ton = 1;
-        wake();
-      }, { passive: true });
-      document.documentElement.addEventListener('pointerleave', () => { ptr.ton = 0; wake(); });
-      addEventListener('pointerdown', (e) => {
-        waves.push({ x: e.clientX, y: e.clientY, t: performance.now() / 1000 });
-        if (waves.length > 6) waves.shift();
-        wake();
-      }, { passive: true });
-    }
-    addEventListener('resize', resize);
-    resize();
+    addEventListener('pointermove', (e) => {
+      target.x = -(e.clientX / innerWidth - 0.5);
+      target.y = -(e.clientY / innerHeight - 0.5);
+      if (!raf) raf = requestAnimationFrame(frame);
+    }, { passive: true });
   }
+
+  // ── Блик на стекле: светлая дуга по кромке идёт за курсором ──
+  const GLASS = '.panel, .card, .strip, .spec, .tabs';
+  let lit = null;
+  addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const el = e.target.closest && e.target.closest(GLASS);
+    if (lit && lit !== el) { lit.style.removeProperty('--lx'); lit.style.removeProperty('--ly'); }
+    lit = el;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--lx', `${(e.clientX - r.left).toFixed(0)}px`);
+    el.style.setProperty('--ly', `${(e.clientY - r.top).toFixed(0)}px`);
+  }, { passive: true });
 
   // ── Рябь от нажатия на всём кликабельном ──
   const RIPPLE = '.btn, .card--link, .tab, .icon-btn, a.strip__item, .top__row, .now__last, .chip';
