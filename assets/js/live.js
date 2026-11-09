@@ -1,8 +1,8 @@
-// Блок Live: «сейчас играет» и статистика музыки из endpoint (worker/).
+// Блок Live: «сейчас играет» и статистика музыки из endpoint (worker/), плюс виджет на экране айфона.
 (() => {
   const cfg = window.FOLZY || {};
   const base = (cfg.musicEndpoint || '').replace(/\/+$/, '');
-  const demo = !base && new URLSearchParams(location.search).has('demo');
+  const demo = new URLSearchParams(location.search).has('demo');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => [...document.querySelectorAll(s)];
@@ -36,6 +36,9 @@
   };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const bg = (url) => (url ? `url("${encodeURI(url)}")` : '');
+  const scSearch = (q) => `https://soundcloud.com/search?q=${encodeURIComponent(q)}`;
+  const artistHref = (t) => t.artist_link || `https://soundcloud.com/search/people?q=${encodeURIComponent(t.artist || '')}`;
+  const setLink = (el, href) => { if (href) el.href = href; else el.removeAttribute('href'); };
 
   // плавный счёт до значения при первой загрузке
   const countUp = (el, target, render) => {
@@ -68,7 +71,7 @@
   };
 
   const get = async (path) => {
-    if (demo) { await new Promise((r) => setTimeout(r, 500)); return demoData()[path.slice(1)]; }
+    if (demo || !base) { await new Promise((r) => setTimeout(r, 400)); return demoData()[path.slice(1)]; }
     const res = await fetch(base + path, { cache: 'no-store' });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || res.status);
@@ -83,8 +86,13 @@
   const drawProgress = () => {
     if (!progress) return;
     const pos = Math.min(progress.dur, progress.pos + (performance.now() - progress.at) / 1000);
-    $('#now-progress-fill').style.transform = `scaleX(${pos / progress.dur})`;
+    const k = pos / progress.dur;
+    $('#now-progress-fill').style.transform = `scaleX(${k})`;
     $('#now-pos').textContent = clock(pos);
+    $('#now-left').textContent = `−${clock(progress.dur - pos)}`;
+    $('#iphone-np-fill').style.transform = `scaleX(${k})`;
+    $('#iphone-np-pos').textContent = clock(pos);
+    $('#iphone-np-left').textContent = `−${clock(progress.dur - pos)}`;
     if (pos >= progress.dur && !endTimer) {
       // трек доиграл — спросим следующий чуть позже, как пост канала «ищу актуальный трек…»
       endTimer = setTimeout(() => { endTimer = 0; loadNow(); }, 4000);
@@ -93,12 +101,12 @@
   const setProgress = (t) => {
     const ok = t && t.duration > 0 && typeof t.position === 'number';
     $('#now-progress').hidden = !ok;
+    $('#iphone-np-progress').hidden = !ok;
     clearInterval(progressTimer);
     clearTimeout(endTimer);
     endTimer = 0;
     progress = ok ? { pos: t.position, dur: t.duration, at: performance.now() } : null;
     if (!ok) return;
-    $('#now-dur').textContent = clock(t.duration);
     drawProgress();
     progressTimer = setInterval(drawProgress, 500);
   };
@@ -122,29 +130,41 @@
     cover.style.backgroundImage = t ? bg(t.cover) : '';
     cover.classList.toggle('has-img', Boolean(t && t.cover));
     cover.querySelector('use').setAttribute('href', t ? '#i-music' : '#i-music-off');
-    $('#now-title').textContent = t ? t.title : 'Тишина';
-    $('#now-artist').textContent = t ? t.artist : 'Сейчас ничего не играет';
+    setLink(cover, t && t.link);
+    $('#now-backdrop').style.backgroundImage = t ? bg(t.cover) : '';
+    $('#now-label').textContent = t ? 'Сейчас играет' : 'Тишина';
+
+    const title = $('#now-title');
+    title.textContent = t ? t.title : 'Сейчас ничего не играет';
+    setLink(title, t && (t.link || scSearch(`${t.artist} ${t.title}`)));
+    const artist = $('#now-artist');
+    artist.textContent = t ? t.artist : 'Включу что-нибудь — появится здесь';
+    setLink(artist, t && artistHref(t));
 
     setProgress(t);
 
-    const linkEl = $('#now-link');
-    linkEl.hidden = !t;
-    if (t) linkEl.href = t.link;
-
-    const lastEl = $('#now-last');
     const last = data.last;
+    const lastEl = $('#now-last');
     lastEl.hidden = !last || Boolean(t && last.title === t.title && last.artist === t.artist);
-    if (last) lastEl.innerHTML = `${t ? 'До этого' : 'Последний'}: <b>${esc(last.artist)} — ${esc(last.title)}</b>, ${ago(last.ts)}`;
+    if (last) {
+      setLink(lastEl, last.link || scSearch(`${last.artist} ${last.title}`));
+      $('#now-last-cover').style.backgroundImage = bg(last.cover);
+      $('#now-last-title').textContent = `${last.artist} — ${last.title}`;
+      $('#now-last-meta').textContent = `${t ? 'До этого' : 'Последний'} · ${ago(last.ts)}`;
+    }
 
     // полоска в hero
     const strip = $('#strip-music');
     strip.textContent = t ? `${t.artist} — ${t.title}` : 'Сейчас ничего не играет';
     strip.closest('.strip__item').classList.toggle('is-live', Boolean(t));
 
-    // экран айфона
-    $('#iphone-np-title').textContent = t ? t.title : 'Тишина';
-    $('#iphone-np-artist').textContent = t ? t.artist : 'Сейчас ничего не играет';
-    $('#iphone-np-cover').style.backgroundImage = t ? bg(t.cover) : '';
+    // экран айфона: виджет плеера только пока трек играет, как на настоящем экране блокировки
+    $('#iphone-np').hidden = !t;
+    if (t) {
+      $('#iphone-np-title').textContent = t.title;
+      $('#iphone-np-artist').textContent = t.artist;
+      $('#iphone-np-cover').style.backgroundImage = bg(t.cover);
+    }
   };
 
   // ── Статистика ──
@@ -161,25 +181,30 @@
       ? '≈ — длительность части треков ещё уточняется, время посчитано примерно.'
       : '';
 
-    const list = $('#top-list');
     const top = s.top || [];
     $('#top-tracks').hidden = !top.length;
-    list.innerHTML = top.map((t, i) => `
-      <li><a href="${esc(t.link)}" target="_blank" rel="noopener">
+    $('#top-list').innerHTML = top.map((t, i) => `
+      <li class="top__row">
         <span class="top__n">${i + 1}</span>
         <span class="top__cover" style="background-image:${esc(bg(t.cover))}">${t.cover ? '' : '<svg class="ico"><use href="#i-music"/></svg>'}</span>
-        <span class="top__text"><b>${esc(t.title)}</b><span>${esc(t.artist)}</span></span>
-        <span class="top__plays">${t.plays} ${plural(t.plays, 'раз', 'раза', 'раз')}</span>
-      </a></li>`).join('');
+        <span class="top__text">
+          <a class="top__title" href="${esc(t.link || scSearch(`${t.artist} ${t.title}`))}" target="_blank" rel="noopener">${esc(t.title)}</a>
+          <a class="top__artist" href="${esc(artistHref(t))}" target="_blank" rel="noopener">${esc(t.artist)}</a>
+        </span>
+        <span class="top__plays">${t.plays}<small>${plural(t.plays, 'раз', 'раза', 'раз')}</small></span>
+      </li>`).join('');
   };
 
-  // ── Ошибки и «не подключено» ──
+  // ── Ошибки ──
   const failNow = (text) => {
     nowEl.dataset.state = 'error';
+    $('#now-label').textContent = 'Нет связи';
     $('#now-title').textContent = 'Нет данных';
+    $('#now-title').removeAttribute('href');
     $('#now-artist').textContent = text;
-    $('#now-link').hidden = true;
+    $('#now-artist').removeAttribute('href');
     $('#now-last').hidden = true;
+    $('#iphone-np').hidden = true;
     setProgress(null);
     $('#strip-music').textContent = 'Нет данных о музыке';
   };
@@ -196,13 +221,7 @@
     try { renderStats(await get('/stats')); } catch (e) { failStats('Статистика не загрузилась. Нажми «обновить» или зайди чуть позже.'); }
   };
 
-  if (!base && !demo) {
-    failNow('Endpoint музыки ещё не подключён.');
-    failStats('Статистика появится, когда подключу endpoint.');
-    $$('[data-refresh]').forEach((b) => { b.hidden = true; });
-    return;
-  }
-  if (demo) $('#demo-note').hidden = false;
+  if (demo || !base) $('#demo-note').hidden = false;
 
   $$('[data-refresh]').forEach((btn) => btn.addEventListener('click', () => {
     btn.classList.remove('is-spinning');

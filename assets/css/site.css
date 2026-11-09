@@ -1,20 +1,22 @@
 /* folzy.ru
-   Тема тёмная осознанно: продолжает прежний сайт и терминальный стиль канала Folzy.bio().
-   Акцент один — оранжевый SoundCloud (основной музыкальный сервис) и только в блоке «Сейчас играет».
+   Палитра — от обоев Celosia с айфона владельца: почти чёрный с индиго, лавандовые ленты.
+   Те же обои лежат фоном страницы, а свет за курсором проявляет ленты: сайт и телефон — одна вещь.
+   Акцент один — оранжевый SoundCloud, только как знак «играет сейчас» (эквалайзер, подпись).
    Шрифты: Onest — гротеск с нормальной кириллицей; JetBrains Mono — для цифр и подписей,
-   перекличка с терминальными постами канала. */
+   перекличка с терминальными постами канала Folzy.bio(). */
 
 :root {
-  --bg: #0c0c0d;
-  --surface: #151517;
-  --surface-2: #1c1c1f;
-  --surface-3: #242428;
-  --line: rgba(255, 255, 255, 0.07);
-  --line-strong: rgba(255, 255, 255, 0.14);
-  --text: #ededee;
-  --muted: #a1a1a8;
-  --faint: #8a8a91;
+  --bg: #09090f;
+  --surface: rgba(17, 17, 27, 0.8);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --surface-3: rgba(255, 255, 255, 0.08);
+  --line: rgba(190, 195, 255, 0.08);
+  --line-strong: rgba(190, 195, 255, 0.18);
+  --text: #eeeef6;
+  --muted: #a4a5b8;
+  --faint: #8b8ca0;
   --accent: #ff5500;
+  --lilac: #9ea2f0;
 
   --r-xl: 26px;
   --r-lg: 18px;
@@ -51,6 +53,34 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 .wrap { width: min(1120px, 100% - 40px); margin-inline: auto; }
 .label { font-size: 12px; color: var(--faint); letter-spacing: 0.01em; }
 .ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* ── Фон: обои + свет за курсором ─────────────────────────── */
+.backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--bg); overflow: hidden; }
+.backdrop__img, .backdrop__light {
+  position: absolute; inset: -2%;
+  background: url('/assets/media/bg-celosia.webp') center / cover no-repeat;
+}
+.backdrop__img {
+  opacity: .5;
+  mask-image: radial-gradient(130% 100% at 75% 10%, #000 20%, rgba(0, 0, 0, .35) 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(130% 100% at 75% 10%, #000 20%, rgba(0, 0, 0, .35) 60%, transparent 100%);
+}
+.backdrop__light {
+  --mx: 70vw; --my: 30vh;
+  opacity: 0; filter: brightness(2.1) saturate(1.35);
+  mask-image: radial-gradient(380px circle at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, .45) 45%, transparent 72%);
+  -webkit-mask-image: radial-gradient(380px circle at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, .45) 45%, transparent 72%);
+  transition: opacity .8s var(--ease);
+}
+.backdrop__light::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(420px circle at var(--mx) var(--my), rgba(140, 146, 255, .16), transparent 70%);
+}
+.backdrop__light.is-on { opacity: .85; }
+.backdrop::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(140% 90% at 50% 0%, transparent 40%, rgba(6, 6, 10, .75) 100%);
+}
 
 /* ── Кнопки ─────────────────────────────────────────────── */
 .btn {
@@ -110,11 +140,6 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 
 /* ── Hero ───────────────────────────────────────────────── */
 .hero { position: relative; padding: calc(var(--nav-h) + 72px) 0 40px; overflow: hidden; }
-.hero__rain {
-  position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; opacity: .55;
-  mask-image: linear-gradient(to bottom, #000 40%, transparent);
-  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent);
-}
 .hero__grid { display: grid; grid-template-columns: 1fr auto; gap: 56px; align-items: center; }
 .hero__name {
   font-size: clamp(76px, 13vw, 156px); font-weight: 600; letter-spacing: -0.055em; line-height: .92;
@@ -139,7 +164,7 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 .hero__avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 .strip {
-  margin-top: 64px; display: grid; grid-template-columns: repeat(3, 1fr);
+  margin-top: 64px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: grid; grid-template-columns: repeat(3, 1fr);
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden;
 }
 .strip__item { display: flex; align-items: center; gap: 14px; padding: 16px 18px; min-width: 0; transition: background-color .25s; }
@@ -195,62 +220,99 @@ a.strip__item:hover { background: var(--surface-2); }
 
 /* ── Live ───────────────────────────────────────────────── */
 .demo-note { margin: -16px 0 18px; font-size: 13px; color: var(--faint); font-family: var(--mono); }
-.live { display: grid; grid-template-columns: 1fr 1.25fr; gap: 12px; }
+.live { display: grid; grid-template-columns: 1.12fr 1fr; gap: 12px; }
 
-.now__body { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 18px 0 8px; }
-.now__cover {
-  width: 132px; height: 132px; border-radius: 22px; display: grid; place-items: center;
-  background: var(--surface-3) center / cover no-repeat; color: var(--muted);
-  transition: transform .6s var(--spring), border-radius .6s var(--ease);
+/* Карточка трека: фон — размытая обложка, как в Apple Music; без трека — тихая и пустая */
+.now { position: relative; overflow: hidden; isolation: isolate; display: flex; flex-direction: column; }
+.now__backdrop {
+  position: absolute; inset: -60px; z-index: -2; background: center / cover no-repeat;
+  filter: blur(50px) saturate(1.6); opacity: 0; transform: scale(1.15);
+  transition: opacity 1.2s var(--ease);
 }
-.now__cover-ico { width: 34px; height: 34px; }
-.now[data-state="playing"] .now__cover { border-radius: 18px; transform: scale(1.04); }
-.now[data-state="playing"] .now__cover.has-img .now__cover-ico { display: none; }
-.now__title { margin-top: 22px; font-size: 22px; max-width: 100%; overflow-wrap: anywhere; }
-.now__artist { margin-top: 4px; color: var(--muted); font-size: 15px; }
-.now__link { margin-top: 18px; }
-.progress { width: min(100%, 280px); margin-top: 18px; }
-.progress__bar { height: 4px; border-radius: 2px; background: var(--surface-3); overflow: hidden; }
-.progress__bar i { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); transition: transform .5s linear; }
-.progress__time { display: flex; justify-content: space-between; margin-top: 7px; font-size: 12px; color: var(--faint); }
-.now__last { margin-top: 18px; font-size: 13px; color: var(--faint); }
-.now__last b { color: var(--muted); font-weight: 500; }
-.now.is-swapping .now__title, .now.is-swapping .now__artist, .now.is-swapping .now__cover { animation: swap .6s var(--ease); }
-@keyframes swap { 0% { opacity: 0; transform: translateY(8px); filter: blur(4px); } }
+.now::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, rgba(14, 14, 22, .25) 0%, rgba(14, 14, 22, .82) 75%);
+}
+.now[data-state="playing"] .now__backdrop { opacity: .7; }
 
-/* Эквалайзер — отмечает реальное состояние «играет», без него не крутится */
-.eq { display: none; gap: 3px; height: 16px; align-items: flex-end; margin-top: 16px; }
-.eq i { width: 3px; height: 100%; border-radius: 2px; background: var(--accent); transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
-.eq i:nth-child(2) { animation-delay: -.3s; }
-.eq i:nth-child(3) { animation-delay: -.6s; }
-.eq i:nth-child(4) { animation-delay: -.15s; }
+.now__status { display: inline-flex; align-items: center; gap: 9px; }
+.now[data-state="playing"] .now__status .label { color: var(--accent); }
+.eq { display: none; gap: 2.5px; height: 12px; align-items: flex-end; }
+.eq i { width: 2.5px; height: 100%; border-radius: 2px; background: var(--accent); transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: -.35s; }
+.eq i:nth-child(3) { animation-delay: -.7s; }
 @keyframes eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
 .now[data-state="playing"] .eq { display: flex; }
-.now[data-state="playing"] .label { color: var(--accent); }
+
+.now__body { display: grid; grid-template-columns: 172px minmax(0, 1fr); gap: 26px; align-items: center; margin: 8px 0 4px; }
+.now__cover {
+  width: 172px; aspect-ratio: 1; border-radius: 16px; display: grid; place-items: center;
+  background: var(--surface-3) center / cover no-repeat; color: var(--muted);
+  box-shadow: 0 26px 50px -20px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .07);
+  transition: transform .55s var(--spring), box-shadow .4s;
+}
+a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
+.now__cover-ico { width: 36px; height: 36px; }
+.now__cover.has-img .now__cover-ico { display: none; }
+.now__title { font-size: clamp(22px, 2.3vw, 28px); letter-spacing: -0.02em; line-height: 1.15; overflow-wrap: anywhere; }
+.now__artist { margin-top: 6px; font-size: 16px; color: var(--muted); overflow-wrap: anywhere; }
+.now__title a, .now__artist a {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size .4s var(--ease), color .25s;
+}
+.now__title a[href]:hover, .now__artist a[href]:hover { background-size: 100% 1px; }
+.now__artist a[href]:hover { color: var(--text); }
+[data-state="loading"] .now__title, [data-state="idle"] .now__title, [data-state="error"] .now__title { color: var(--muted); }
+
+.progress { width: 100%; margin-top: 22px; }
+.progress__bar { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .14); overflow: hidden; }
+.progress__bar i { display: block; height: 100%; border-radius: inherit; background: rgba(255, 255, 255, .92); transform-origin: left; transform: scaleX(0); transition: transform .5s linear; }
+.progress__time { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11.5px; color: var(--faint); }
+
+.now__last {
+  display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 10px 14px 10px 10px;
+  border-radius: 14px; background: rgba(255, 255, 255, .05); transition: background-color .25s;
+}
+.now__body + .now__last { margin-top: 22px; }
+.now__last:hover { background: rgba(255, 255, 255, .09); }
+.now__last-cover { width: 38px; height: 38px; flex: none; border-radius: 9px; background: var(--surface-3) center / cover; }
+.now__last-text { display: flex; flex-direction: column; min-width: 0; }
+.now__last-text b, .now__last-text i { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; }
+.now__last-text b { font-size: 13.5px; font-weight: 600; }
+.now__last-text i { font-size: 12px; color: var(--faint); }
+.now__last .ico { margin-left: auto; width: 16px; height: 16px; color: var(--faint); transition: transform .35s var(--spring); }
+.now__last:hover .ico { transform: translate(2px, -2px); color: var(--text); }
+.now.is-swapping .now__meta, .now.is-swapping .now__cover { animation: swap .7s var(--ease); }
+@keyframes swap { 0% { opacity: 0; transform: translateY(10px); filter: blur(6px); } }
 
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.tile { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: var(--r-lg); background: var(--surface-2); }
+.tile { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: var(--r-lg); background: var(--surface-2); border: 1px solid var(--line); }
 .tile__value { font-size: clamp(22px, 3vw, 28px); font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
 .tile__sub { font-size: 12.5px; color: var(--faint); }
 .stats__note { margin-top: 14px; font-size: 12.5px; color: var(--faint); min-height: 1em; }
-[data-state="loading"] .tile__value, [data-state="loading"] .now__title { color: var(--faint); }
+[data-state="loading"] .tile__value { color: var(--faint); }
 
 .top { margin-top: 12px; }
-.top__list { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; counter-reset: top; }
-.top__list li a {
-  display: grid; grid-template-columns: 22px 44px 1fr auto; align-items: center; gap: 12px;
-  padding: 8px 14px 8px 12px; border-radius: 14px; background: var(--surface-2);
-  transition: background-color .25s;
+.top__list { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.top__row {
+  position: relative; display: grid; grid-template-columns: 20px 46px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 8px 16px 8px 12px; border-radius: 14px; background: var(--surface-2); transition: background-color .25s;
 }
-.top__list li a:hover { background: var(--surface-3); }
+.top__row:hover { background: var(--surface-3); }
 .top__n { font-family: var(--mono); font-size: 12px; color: var(--faint); }
-.top__cover { width: 44px; height: 44px; border-radius: 10px; background: var(--surface-3) center / cover; display: grid; place-items: center; color: var(--faint); }
+.top__cover {
+  width: 46px; height: 46px; border-radius: 10px; background: var(--surface-3) center / cover; display: grid; place-items: center; color: var(--faint);
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .8);
+}
 .top__cover .ico { width: 18px; height: 18px; }
-.top__text { min-width: 0; }
-.top__text b, .top__text span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.top__text b { font-weight: 600; font-size: 14.5px; }
-.top__text span { font-size: 13px; color: var(--muted); }
-.top__plays { font-family: var(--mono); font-size: 12.5px; color: var(--faint); white-space: nowrap; }
+.top__text { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.top__title, .top__artist { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top__title { font-weight: 600; font-size: 14.5px; }
+.top__title::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }   /* вся строка — ссылка на трек */
+.top__artist { position: relative; z-index: 1; font-size: 13px; color: var(--muted); transition: color .2s; }
+.top__artist:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.top__plays { font-family: var(--mono); font-size: 15px; text-align: right; line-height: 1.1; }
+.top__plays small { display: block; font-size: 10.5px; color: var(--faint); }
 
 /* ── Обо мне ────────────────────────────────────────────── */
 .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -263,65 +325,145 @@ a.strip__item:hover { background: var(--surface-2); }
 .fact dd a:hover { border-color: var(--text); }
 
 /* ── Телефон ────────────────────────────────────────────── */
-.phone-block { display: grid; grid-template-columns: minmax(300px, 1fr) 1.35fr; gap: 12px; }
-.phone-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 40px 22px 24px; perspective: 1400px; overflow: hidden; }
+.phone-block { display: grid; grid-template-columns: minmax(320px, 1fr) 1.35fr; gap: 12px; }
+.phone-stage {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  padding: 44px 22px 26px; perspective: 1600px; overflow: hidden;
+  background:
+    radial-gradient(70% 55% at 50% 42%, rgba(120, 126, 230, .16), transparent 70%),
+    var(--surface);
+}
+.phone-stage::after {        /* тень на «полу» под телефоном */
+  content: ''; position: absolute; left: 50%; bottom: 74px; width: 210px; height: 26px; transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(0, 0, 0, .7), transparent); filter: blur(6px);
+}
 
 .iphone {
   --rx: 0deg; --ry: 0deg; --flip: 0deg;
-  position: relative; width: 210px; aspect-ratio: 71.6 / 146.6; cursor: pointer;
+  position: relative; z-index: 1; width: 236px; aspect-ratio: 71.6 / 146.6; cursor: pointer;
   transform-style: preserve-3d;
   transform: rotateX(var(--rx)) rotateY(calc(var(--ry) + var(--flip)));
-  transition: transform .9s var(--spring);
+  transition: transform 1s var(--spring);
 }
 .iphone.is-tracking { transition: transform .25s var(--ease); }
+
+/* Корпус: тёмный титан, светлая кромка по краю */
 .iphone__face {
-  position: absolute; inset: 0; border-radius: 34px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  background: linear-gradient(145deg, #8e8c88, #4a4946 45%, #6f6d69);
-  padding: 3px;
-  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, .9);
+  position: absolute; inset: 0; border-radius: 40px; padding: 3.5px;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: linear-gradient(135deg, #7c7d89 0%, #3d3e47 16%, #24252c 50%, #474853 84%, #85868f 100%);
+  box-shadow: 0 46px 80px -34px rgba(0, 0, 0, .95), inset 0 0 0 1px rgba(255, 255, 255, .2), inset 0 0 0 2.5px rgba(0, 0, 0, .45);
 }
-.iphone__back { transform: rotateY(180deg); background: linear-gradient(150deg, #5d5b57, #3b3a38 55%, #514f4c); }
-.iphone__back::before {
-  content: ''; position: absolute; inset: 3px; border-radius: 31px;
-  background: linear-gradient(160deg, #3c3b39, #2a2a29);
-}
+.iphone__back { transform: rotateY(180deg); }
+.iphone__btn { position: absolute; width: 3px; border-radius: 2px; background: linear-gradient(90deg, #2b2c33, #757682 55%, #3c3d46); }
+.iphone__btn--action { left: -2.5px; top: 17%; height: 4.6%; }
+.iphone__btn--up { left: -2.5px; top: 25%; height: 9%; }
+.iphone__btn--down { left: -2.5px; top: 36%; height: 9%; }
+.iphone__btn--power { right: -2.5px; top: 28%; height: 13.5%; }
+/* на спинке стороны зеркальные: громкость справа, питание слева */
+.iphone__back .iphone__btn--action, .iphone__back .iphone__btn--up, .iphone__back .iphone__btn--down { left: auto; right: -2.5px; }
+.iphone__back .iphone__btn--power { right: auto; left: -2.5px; }
+
+/* Экран блокировки: обои владельца, статус-бар, часы, виджет плеера */
 .iphone__screen {
-  position: relative; height: 100%; border-radius: 31px; overflow: hidden;
-  border: 5px solid #050505; display: flex; flex-direction: column; align-items: center;
-  background: radial-gradient(120% 80% at 50% 0%, #2b2622, #0b0b0c 70%);
+  position: relative; height: 100%; border-radius: 36.5px; overflow: hidden; border: 6px solid #040406;
+  background: #0b0b14 url('/assets/media/wallpaper-lock.webp') center / cover no-repeat;
+  display: flex; flex-direction: column; align-items: center; color: #fff;
+  font-variant-numeric: tabular-nums;
 }
-.iphone__island { width: 34%; height: 22px; margin-top: 9px; border-radius: 999px; background: #000; }
-.iphone__date { margin-top: 26px; font-size: 11.5px; color: rgba(255, 255, 255, .75); font-weight: 500; }
-.iphone__time { font-size: 58px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; color: rgba(255, 255, 255, .92); }
+.iphone__status {
+  position: absolute; top: 10px; left: 20px; right: 16px; display: flex; justify-content: space-between; align-items: center;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .01em;
+}
+.iphone__status-icons { display: flex; gap: 4px; align-items: center; }
+.iphone__status-icons .ico { width: 12px; height: 12px; }
+.iphone__battery { position: relative; width: 20px; height: 10px; padding: 1.2px; border-radius: 3px; border: 1px solid rgba(255, 255, 255, .45); }
+.iphone__battery i { display: block; width: 78%; height: 100%; border-radius: 1.5px; background: #fff; }
+.iphone__battery::after { content: ''; position: absolute; right: -3.5px; top: 2.5px; width: 2px; height: 3.5px; border-radius: 0 1px 1px 0; background: rgba(255, 255, 255, .45); }
+.iphone__island { position: absolute; top: 8px; left: 50%; width: 31%; height: 22px; transform: translateX(-50%); border-radius: 999px; background: #000; }
+.iphone__lock { margin-top: 42px; width: 12px; height: 12px; opacity: .9; }
+.iphone__date { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; color: rgba(236, 237, 255, .82); }
+.iphone__date::first-letter { text-transform: uppercase; }
+.iphone__time {
+  margin-top: 1px; font-size: 68px; font-weight: 600; letter-spacing: -0.035em; line-height: 1;
+  color: rgba(232, 234, 255, .93); text-shadow: 0 4px 24px rgba(10, 10, 30, .35);
+}
+
 .iphone__np {
-  margin-top: auto; margin-bottom: 26px; width: 86%; display: flex; gap: 9px; align-items: center;
-  padding: 9px; border-radius: 16px; background: rgba(255, 255, 255, .1);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  position: absolute; left: 9px; right: 9px; bottom: 70px; padding: 11px 12px 9px; border-radius: 20px;
+  background: rgba(28, 29, 48, .5); border: .5px solid rgba(255, 255, 255, .14);
+  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
 }
-.iphone__np-cover { width: 34px; height: 34px; border-radius: 8px; flex: none; background: rgba(255, 255, 255, .14) center / cover; }
-.iphone__np-text { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+.iphone__np-row { display: flex; gap: 9px; align-items: center; }
+.iphone__np-cover { width: 36px; height: 36px; flex: none; border-radius: 7px; background: rgba(255, 255, 255, .14) center / cover; }
+.iphone__np-text { display: flex; flex-direction: column; min-width: 0; }
 .iphone__np-text b, .iphone__np-text i { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; }
 .iphone__np-text b { font-size: 11.5px; font-weight: 600; }
-.iphone__np-text i { font-size: 10.5px; color: rgba(255, 255, 255, .6); }
+.iphone__np-text i { font-size: 10.5px; color: rgba(255, 255, 255, .62); }
+.iphone__np-progress { margin-top: 9px; }
+.iphone__np-bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .22); overflow: hidden; }
+.iphone__np-bar i { display: block; height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); transition: transform .5s linear; }
+.iphone__np-times { display: flex; justify-content: space-between; margin-top: 4px; font-size: 8.5px; color: rgba(255, 255, 255, .55); }
+.iphone__np-controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 4px; }
+.iphone__np-controls .ico { width: 15px; height: 15px; }
+.iphone__np-controls .ico--big { width: 20px; height: 20px; }
 
-.iphone__bump {
-  position: absolute; top: 14px; left: 14px; width: 46%; aspect-ratio: 1; border-radius: 24px;
-  background: linear-gradient(150deg, #4a4946, #2d2c2b); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+.iphone__dock { position: absolute; left: 20px; right: 20px; bottom: 22px; display: flex; justify-content: space-between; }
+.iphone__round {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(18, 18, 32, .45); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.iphone__round .ico { width: 15px; height: 15px; }
+.iphone__home { position: absolute; bottom: 6px; left: 50%; width: 36%; height: 4px; transform: translateX(-50%); border-radius: 2px; background: rgba(255, 255, 255, .88); }
+.iphone__glare {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(118deg, rgba(255, 255, 255, .11) 0%, rgba(255, 255, 255, .03) 26%, transparent 40%);
+}
+
+/* Спинка: матовое стекло, приподнятое плато с тремя камерами */
+.iphone__back::before {
+  content: ''; position: absolute; inset: 3.5px; border-radius: 36.5px;
+  background:
+    radial-gradient(120% 70% at 30% 0%, rgba(255, 255, 255, .07), transparent 60%),
+    linear-gradient(162deg, #3b3c47 0%, #2a2b34 45%, #20212a 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
+}
+.iphone__plateau {
+  position: absolute; top: 15px; left: 15px; width: 47%; aspect-ratio: 1; border-radius: 30px;
+  background: linear-gradient(145deg, #4b4c58, #2d2e37 60%, #3a3b46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 -1px 0 rgba(0, 0, 0, .45), 0 8px 16px -8px rgba(0, 0, 0, .8);
 }
 .lens {
-  position: absolute; width: 40%; aspect-ratio: 1; border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, #0d1a2a 0 30%, #05070a 32% 55%, #1b1b1d 57% 68%, #3a3937 70%);
-  box-shadow: 0 0 0 2px #222;
+  position: absolute; width: 43%; aspect-ratio: 1; border-radius: 50%;
+  background: conic-gradient(from 210deg, #9a9ba6, #3a3b44, #b0b1bb, #2c2d35, #9a9ba6);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, .65), 0 0 0 1.5px #18191e;
 }
-.l1 { top: 8%; left: 8%; } .l2 { top: 52%; left: 8%; } .l3 { top: 30%; left: 52%; }
-.flash { position: absolute; top: 9%; right: 10%; width: 13%; aspect-ratio: 1; border-radius: 50%; background: #d8d2c4; }
-.lidar { position: absolute; bottom: 10%; right: 12%; width: 11%; aspect-ratio: 1; border-radius: 50%; background: #111; }
+.lens i {
+  position: absolute; inset: 9%; border-radius: 50%; overflow: hidden;
+  background: radial-gradient(circle, #0c1022 0 36%, #000 38% 50%, #15161d 52% 100%);
+  box-shadow: inset 0 0 0 2px #050507;
+}
+.lens i::before {
+  content: ''; position: absolute; inset: 20%; border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(160, 168, 255, .6), transparent 28%),
+    radial-gradient(circle at 66% 70%, rgba(90, 200, 255, .28), transparent 34%),
+    radial-gradient(circle, #10163a 0 42%, #04050c 72%);
+}
+.l1 { top: 6%; left: 6%; } .l2 { top: 51%; left: 6%; } .l3 { top: 28.5%; left: 51%; }
+.flash { position: absolute; top: 9%; right: 11%; width: 14%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #fff7e0, #dcd2b1 60%, #a99d79); box-shadow: 0 0 0 1.5px #23242a; }
+.lidar { position: absolute; bottom: 11%; right: 13%; width: 13%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #2b2c35, #08080b); box-shadow: 0 0 0 1.5px #1e1f25; }
+.mic { position: absolute; top: 46%; right: 19%; width: 4%; aspect-ratio: 1; border-radius: 50%; background: #0a0a0d; }
+.iphone__sheen {
+  position: absolute; inset: 3.5px; border-radius: 36.5px; pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, .055) 46%, transparent 60%);
+}
 
 .phone-info { display: flex; flex-direction: column; gap: 12px; }
 .phone-intro h3 { font-size: 26px; letter-spacing: -0.02em; margin-bottom: 10px; }
 .phone-intro p { color: var(--muted); font-size: 15px; max-width: 36em; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-.chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: var(--surface-2); font-size: 13.5px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: var(--surface-3); font-size: 13.5px; }
 .chip .ico { width: 15px; height: 15px; color: var(--muted); }
 .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .spec { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); font-size: 14.5px; }
@@ -357,6 +499,9 @@ a.strip__item:hover { background: var(--surface-2); }
   .nav__links a { padding: 7px 10px; }
 }
 @media (max-width: 720px) {
+  .now__body { grid-template-columns: 104px minmax(0, 1fr); gap: 16px; }
+  .now__cover { width: 104px; border-radius: 12px; }
+  .now__title { font-size: 20px; }
   :root { --nav-h: 58px; }
   .nav__links { display: none; }
   .hero { padding-top: calc(var(--nav-h) + 40px); }

@@ -4,21 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Folzy</title>
-  <meta name="description" content="Folzy — бэкенд на Python, iOS на Swift, Telegram-боты. Рига. Что слушаю прямо сейчас и сколько за месяц.">
+  <meta name="description" content="Folzy — бэкенд на Python, iOS на Swift, Telegram-боты. Санкт-Петербург. Что слушаю прямо сейчас и сколько за месяц.">
   <meta name="theme-color" content="#0c0c0d">
   <meta property="og:title" content="Folzy">
-  <meta property="og:description" content="Бэкенд на Python, iOS на Swift, Telegram-боты. Рига.">
+  <meta property="og:description" content="Бэкенд на Python, iOS на Swift, Telegram-боты. Санкт-Петербург.">
   <meta property="og:image" content="https://folzy.ru/assets/media/avatar-poster.jpg">
   <link rel="icon" href="/assets/media/avatar-poster.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=7">
-  <script src="/assets/js/config.js?v=7"></script>
-  <script src="/assets/js/site.js?v=7" defer></script>
-  <script src="/assets/js/live.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/css/site.css?v=9">
+  <script src="/assets/js/config.js?v=9"></script>
+  <script src="/assets/js/site.js?v=9" defer></script>
+  <script src="/assets/js/live.js?v=9" defer></script>
 </head>
 <body>
+  <div class="backdrop" aria-hidden="true">
+    <div class="backdrop__img"></div>
+    <div class="backdrop__light" id="backdrop-light"></div>
+  </div>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
@@ -47,6 +51,13 @@
       <symbol id="i-display" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
       <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
       <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path d="M11 7 4 12l7 5zM20 7l-7 5 7 5z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="m13 7 7 5-7 5zM4 7l7 5-7 5z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor" stroke="none"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+      <symbol id="i-torch" viewBox="0 0 24 24"><path d="M8 2h8v4l-2 4v11a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V10L8 6z"/><path d="M12 13v2"/></symbol>
+      <symbol id="i-signal" viewBox="0 0 24 24"><rect x="2" y="15" width="3.5" height="5" rx="1" fill="currentColor" stroke="none"/><rect x="7.5" y="12" width="3.5" height="8" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="8" width="3.5" height="12" rx="1" fill="currentColor" stroke="none"/><rect x="18.5" y="4" width="3.5" height="16" rx="1" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0" stroke-width="2.4"/><circle cx="12" cy="19.5" r="1.6" fill="currentColor" stroke="none"/></symbol>
       <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/></symbol>
     </defs>
   </svg>
@@ -68,7 +79,6 @@
 
   <main id="top">
     <section class="hero">
-      <canvas class="hero__rain" id="rain" aria-hidden="true"></canvas>
       <div class="wrap hero__grid">
         <div class="hero__text">
           <h1 class="hero__name" aria-label="Folzy"><span>F</span><span>o</span><span>l</span><span>z</span><span>y</span></h1>
@@ -219,28 +229,36 @@
     <section class="section" id="live">
       <div class="wrap">
         <h2 class="section__title reveal"><span class="section__num">02</span>Live</h2>
-        <p class="demo-note" id="demo-note" hidden>Демо-данные для превью: endpoint ещё не подключён.</p>
+        <p class="demo-note" id="demo-note" hidden>Демо-данные для превью вёрстки — настоящие появятся с подключённым endpoint.</p>
 
         <div class="live reveal">
           <article class="panel now" id="now" data-state="loading" aria-live="polite">
+            <div class="now__backdrop" id="now-backdrop" aria-hidden="true"></div>
             <div class="panel__head">
-              <span class="label mono">Сейчас играет</span>
+              <span class="now__status">
+                <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="label mono" id="now-label">Сейчас играет</span>
+              </span>
               <button class="icon-btn" type="button" data-refresh aria-label="Обновить"><svg class="ico"><use href="#i-refresh"/></svg></button>
             </div>
             <div class="now__body">
-              <div class="now__cover" id="now-cover">
+              <a class="now__cover" id="now-cover" target="_blank" rel="noopener" aria-label="Открыть трек в SoundCloud">
                 <svg class="ico now__cover-ico"><use href="#i-music-off"/></svg>
+              </a>
+              <div class="now__meta">
+                <h3 class="now__title"><a id="now-title" target="_blank" rel="noopener">Загружаю…</a></h3>
+                <p class="now__artist"><a id="now-artist" target="_blank" rel="noopener">&nbsp;</a></p>
+                <div class="progress" id="now-progress" hidden>
+                  <div class="progress__bar"><i id="now-progress-fill"></i></div>
+                  <div class="progress__time mono"><span id="now-pos">0:00</span><span id="now-left">−0:00</span></div>
+                </div>
               </div>
-              <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-              <h3 class="now__title" id="now-title">Загружаю…</h3>
-              <p class="now__artist" id="now-artist">&nbsp;</p>
-              <div class="progress" id="now-progress" hidden>
-                <div class="progress__bar"><i id="now-progress-fill"></i></div>
-                <div class="progress__time mono"><span id="now-pos">0:00</span><span id="now-dur">0:00</span></div>
-              </div>
-              <a class="btn btn--ghost btn--sm now__link" id="now-link" href="#" target="_blank" rel="noopener" hidden>Открыть в SoundCloud<svg class="ico"><use href="#i-arrow"/></svg></a>
-              <p class="now__last" id="now-last" hidden></p>
             </div>
+            <a class="now__last" id="now-last" target="_blank" rel="noopener" hidden>
+              <span class="now__last-cover" id="now-last-cover"></span>
+              <span class="now__last-text"><b id="now-last-title"></b><i id="now-last-meta"></i></span>
+              <svg class="ico"><use href="#i-arrow"/></svg>
+            </a>
           </article>
 
           <article class="panel stats" id="stats" data-state="loading">
@@ -275,7 +293,7 @@
             <h3>Профиль</h3>
             <dl>
               <div><dt>Ник</dt><dd>Folzy</dd></div>
-              <div><dt>Регион</dt><dd>Латвия, Рига</dd></div>
+              <div><dt>Регион</dt><dd>Россия, Санкт-Петербург</dd></div>
               <div><dt>Моё время</dt><dd class="mono" data-clock="full">--:--:--</dd></div>
             </dl>
           </article>
@@ -283,7 +301,7 @@
             <span class="badge-ico"><svg class="ico"><use href="#i-code"/></svg></span>
             <h3>Стек</h3>
             <dl>
-              <div><dt>Языки</dt><dd>Python, Swift, JavaScript</dd></div>
+              <div><dt>Языки</dt><dd>Python, Swift, C++, Rust</dd></div>
               <div><dt>Боты</dt><dd>pyTelegramBotAPI, Business API</dd></div>
               <div><dt>Бэкенд</dt><dd>Flask, SQLite</dd></div>
               <div><dt>Сервер</dt><dd>Pterodactyl, Python 3.13</dd></div>
@@ -322,21 +340,53 @@
           <div class="panel phone-stage reveal">
             <div class="iphone" id="iphone" tabindex="0" role="button" aria-label="Повернуть iPhone">
               <div class="iphone__face iphone__front">
+                <span class="iphone__btn iphone__btn--action"></span>
+                <span class="iphone__btn iphone__btn--up"></span>
+                <span class="iphone__btn iphone__btn--down"></span>
+                <span class="iphone__btn iphone__btn--power"></span>
                 <div class="iphone__screen">
+                  <div class="iphone__status">
+                    <span>Folzy</span>
+                    <span class="iphone__status-icons">
+                      <svg class="ico"><use href="#i-signal"/></svg><svg class="ico"><use href="#i-wifi"/></svg>
+                      <span class="iphone__battery"><i></i></span>
+                    </span>
+                  </div>
                   <span class="iphone__island"></span>
+                  <svg class="ico iphone__lock"><use href="#i-lock"/></svg>
                   <span class="iphone__date" id="iphone-date"></span>
                   <span class="iphone__time" data-clock="lock">--:--</span>
-                  <div class="iphone__np" id="iphone-np">
-                    <span class="iphone__np-cover" id="iphone-np-cover"></span>
-                    <span class="iphone__np-text"><b id="iphone-np-title">Тишина</b><i id="iphone-np-artist">Сейчас ничего не играет</i></span>
+                  <div class="iphone__np" id="iphone-np" hidden>
+                    <div class="iphone__np-row">
+                      <span class="iphone__np-cover" id="iphone-np-cover"></span>
+                      <span class="iphone__np-text"><b id="iphone-np-title"></b><i id="iphone-np-artist"></i></span>
+                    </div>
+                    <div class="iphone__np-progress" id="iphone-np-progress" hidden>
+                      <div class="iphone__np-bar"><i id="iphone-np-fill"></i></div>
+                      <div class="iphone__np-times"><span id="iphone-np-pos">0:00</span><span id="iphone-np-left">−0:00</span></div>
+                    </div>
+                    <div class="iphone__np-controls">
+                      <svg class="ico"><use href="#i-prev"/></svg><svg class="ico ico--big"><use href="#i-pause"/></svg><svg class="ico"><use href="#i-next"/></svg>
+                    </div>
                   </div>
+                  <div class="iphone__dock">
+                    <span class="iphone__round"><svg class="ico"><use href="#i-torch"/></svg></span>
+                    <span class="iphone__round"><svg class="ico"><use href="#i-camera"/></svg></span>
+                  </div>
+                  <span class="iphone__home"></span>
+                  <span class="iphone__glare"></span>
                 </div>
               </div>
               <div class="iphone__face iphone__back">
-                <div class="iphone__bump">
-                  <span class="lens l1"></span><span class="lens l2"></span><span class="lens l3"></span>
-                  <span class="flash"></span><span class="lidar"></span>
+                <span class="iphone__btn iphone__btn--action"></span>
+                <span class="iphone__btn iphone__btn--up"></span>
+                <span class="iphone__btn iphone__btn--down"></span>
+                <span class="iphone__btn iphone__btn--power"></span>
+                <div class="iphone__plateau">
+                  <span class="lens l1"><i></i></span><span class="lens l2"><i></i></span><span class="lens l3"><i></i></span>
+                  <span class="flash"></span><span class="lidar"></span><span class="mic"></span>
                 </div>
+                <span class="iphone__sheen"></span>
               </div>
             </div>
             <button class="btn btn--ghost btn--sm phone-flip" type="button" id="phone-flip"><svg class="ico"><use href="#i-rotate"/></svg>Повернуть</button>
@@ -413,7 +463,7 @@
 
   <footer class="footer">
     <div class="wrap footer__inner">
-      <span>Folzy · Рига</span>
+      <span>Folzy · Санкт-Петербург</span>
       <span class="mono">folzy.ru</span>
     </div>
   </footer>

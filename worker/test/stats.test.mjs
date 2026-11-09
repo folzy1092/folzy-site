@@ -204,13 +204,15 @@ test('обложка из пуша бота попадает в ответ из 
 
 const scResults = [
   { title: 'de_survivor onda andar (instrumental)', user: { username: 'lokep23' }, artwork_url: 'https://i1.sndcdn.com/artworks-x-large.jpg', permalink_url: 'https://soundcloud.com/m/x' },
-  { title: 'de_survivor', user: { username: 'ONDA ANDAR' }, publisher_metadata: { artist: 'ONDA ANDAR' }, artwork_url: 'https://i1.sndcdn.com/artworks-VClI-large.png', permalink_url: 'https://soundcloud.com/onda_andar/de_survivor-9' },
+  { title: 'de_survivor', full_duration: 196123, user: { username: 'ONDA ANDAR', permalink_url: 'https://soundcloud.com/onda_andar' }, publisher_metadata: { artist: 'ONDA ANDAR' }, artwork_url: 'https://i1.sndcdn.com/artworks-VClI-large.png', permalink_url: 'https://soundcloud.com/onda_andar/de_survivor-9' },
 ];
 
 test('SoundCloud: берётся трек с тем же названием и автором, обложка 500x500', () => {
   const r = pickScTrack(scResults, 'onda andar', 'de_survivor');
   assert.equal(r.cover, 'https://i1.sndcdn.com/artworks-VClI-t500x500.png');
   assert.equal(r.link, 'https://soundcloud.com/onda_andar/de_survivor-9');
+  assert.equal(r.artist_link, 'https://soundcloud.com/onda_andar');
+  assert.equal(r.duration, 196);
   assert.equal(pickScTrack(scResults, 'onda andar', 'совсем другое'), null);
   assert.equal(artwork({ user: { avatar_url: 'https://i1.sndcdn.com/avatars-a-large.jpg' } }), 'https://i1.sndcdn.com/avatars-a-t500x500.jpg');
 });
@@ -251,7 +253,7 @@ test('SoundCloud: client_id со страницы, поиск, кэш и «не 
 test('SoundCloud: обложка от бота важнее найденной, ссылка — прямая', async () => {
   const env = { CACHE: fakeKv() };
   await env.CACHE.put('cover:onda andar|de_survivor', 'https://bot/cover.jpg');
-  await env.CACHE.put('sc:onda andar|de_survivor', JSON.stringify({ cover: 'https://sc/cover.jpg', link: 'https://soundcloud.com/onda_andar/de_survivor-9' }));
+  await env.CACHE.put('sc3:onda andar|de_survivor', JSON.stringify({ cover: 'https://sc/cover.jpg', link: 'https://soundcloud.com/onda_andar/de_survivor-9' }));
   const [t] = await withCovers(env, [{ title: 'de_survivor', artist: 'onda andar', cover: null, link: '' }]);
   assert.equal(t.cover, 'https://bot/cover.jpg');
   assert.equal(t.link, 'https://soundcloud.com/onda_andar/de_survivor-9');
@@ -260,4 +262,10 @@ test('SoundCloud: обложка от бота важнее найденной, 
 test('song.link с SoundCloud внутри разворачивается в прямую ссылку', () => {
   assert.equal(cleanTrack({ title: 'X', link: 'https://song.link/https://soundcloud.com/onda_andar/x' }).link, 'https://soundcloud.com/onda_andar/x');
   assert.equal(cleanTrack({ title: 'X', link: 'https://song.link/ya/123' }).link, 'https://song.link/ya/123');
+});
+
+test('бот: точная длина трека попадает в кэш длительностей', async () => {
+  const env = { LASTFM_API_KEY: 'k', LASTFM_USER: 'dur-1', PUSH_TOKEN: 'secret', NOW: fakeNow(), CACHE: fakeKv() };
+  await push(env, { playing: true, track: { title: 'Zombie', artist: 'cowboyclicker', duration: 131, position: 1, at: Date.now() / 1000 } });
+  assert.equal(await env.CACHE.get('dur2:cowboyclicker|zombie'), '131');
 });

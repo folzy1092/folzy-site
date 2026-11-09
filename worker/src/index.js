@@ -21,7 +21,9 @@ const API = 'https://ws.audioscrobbler.com/2.0/';
 const PLACEHOLDER_IMAGE = '2a96cbd8b46e442fc41c2b86b821562f';
 const DEFAULT_DURATION = 180;
 const MAX_PAGES = 8;            // 8 × 200 = 1600 скробблов за месяц, хватает с запасом
-const DURATION_BUDGET = 20;     // лимит воркера — 50 подзапросов: страницы скробблов (≤8) + это + SoundCloud (≤11)
+const DURATION_BUDGET = 14;     // лимит воркера — 50 подзапросов: страницы (≤8) + client_id (≤5) + 14 поисков SC
+                                // + запасные track.getInfo (≤14) + обложки топа (≤6)
+const DURATION_TTL = 60 * 60 * 24 * 120;
 const NOW_TTL = 15;
 const STATS_TTL = 600;
 const TOP_LIMIT = 6;
@@ -62,11 +64,11 @@ export default {
     }
     try {
       if (path === '/now') return json(await now(env), 200, 5);
-      if (path === '/stats') return json(await cached(env, 'stats:v2', STATS_TTL, () => stats(env, ctx)), 200, 60);
+      if (path === '/stats') return json(await cached(env, 'stats:v4', STATS_TTL, () => stats(env, ctx)), 200, 60);
       if (path === '/') {
         const [n, st] = await Promise.all([
           now(env),
-          cached(env, 'stats:v2', STATS_TTL, () => stats(env, ctx)),
+          cached(env, 'stats:v4', STATS_TTL, () => stats(env, ctx)),
         ]);
         return json({ now: n, stats: st }, 200, 5);
       }
@@ -106,6 +108,7 @@ export function cleanTrack(raw) {
     artist,
     cover: /^https:\/\//.test(cover) ? cover : null,
     link: /^https:\/\/(soundcloud\.com|song\.link|on\.soundcloud\.com)\//.test(link) ? link : linkFor(artist, title),
+    artist_link: /^https:\/\/soundcloud\.com\//.test(text(raw.artist_link, 600)) ? text(raw.artist_link, 600) : artistLinkFor(artist),
     duration: Math.round(number(raw.duration)),
     position: number(raw.position),
     at: number(raw.at),
@@ -129,6 +132,11 @@ async function receivePush(request, env) {
   };
   await stub.fetch('https://now/', { method: 'PUT', body: JSON.stringify(state) });
   await rememberCovers(env, [track, state.last]);
+  if (track && track.duration > 0) {
+    // длина от Dotify точная — она важнее найденной поиском
+    const key = `dur2:${trackKey(track.artist, track.title)}`;
+    if ((await kvGet(env, key)) !== String(track.duration)) await kvPut(env, key, String(track.duration), DURATION_TTL);
+  }
   return json({ ok: true });
 }
 
@@ -158,6 +166,7 @@ export async function withCovers(env, tracks) {
     if (!sc) return;
     if (!t.cover) t.cover = sc.cover;
     if (sc.link) t.link = sc.link;
+    if (sc.artist_link) t.artist_link = sc.artist_link;
   }));
   return tracks;
 }
@@ -169,7 +178,16 @@ const SC_CLIENT_ID_RE = /client_id\s*[:=]\s*["']([A-Za-z0-9]{32})["']/;
 const SC_HEADERS = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36' };
 
 // client_id нет в официальном API: берём из js-бандлов soundcloud.com, как selfbot (sc_api.py)
-async function scClientId(env, fresh = false) {
+let clientIdLoading = null;      // параллельные поиски ждут один и тот же разбор страницы
+
+function scClientId(env, fresh = false) {
+  if (fresh || !clientIdLoading) {
+    clientIdLoading = loadScClientId(env, fresh).catch((e) => { clientIdLoading = null; throw e; });
+  }
+  return clientIdLoading;
+}
+
+async function loadScClientId(env, fresh) {
   if (!fresh) {
     const cachedId = await kvGet(env, 'sc:client_id');
     if (cachedId) return cachedId;
@@ -215,7 +233,12 @@ export function pickScTrack(results, artist, title) {
       bestScore = score;
     }
   }
-  return best ? { cover: artwork(best), link: best.permalink_url || null } : null;
+  return best ? {
+    cover: artwork(best),
+    link: best.permalink_url || null,
+    artist_link: (best.user && best.user.permalink_url) || null,
+    duration: Math.round(Number(best.full_duration || best.duration || 0) / 1000),
+  } : null;
 }
 
 async function scSearch(env, query) {
@@ -232,7 +255,7 @@ async function scSearch(env, query) {
 
 // {cover, link} из кэша или поиска; null — не нашли (запоминаем на неделю)
 async function scTrack(env, artist, title) {
-  const key = `sc:${trackKey(artist, title)}`;
+  const key = `sc3:${trackKey(artist, title)}`;      // sc3: — с artist_link и duration
   const hit = await kvGet(env, key);
   if (hit !== null) {
     const value = JSON.parse(hit);
@@ -308,6 +331,10 @@ export function cover(images) {
   return src && !src.includes(PLACEHOLDER_IMAGE) ? src : null;
 }
 
+export function artistLinkFor(artist) {
+  return `https://soundcloud.com/search/people?q=${encodeURIComponent(String(artist || '').trim())}`;
+}
+
 export function linkFor(artist, title) {
   return `https://soundcloud.com/search?q=${encodeURIComponent(`${artist} ${title}`.trim())}`;
 }
@@ -321,6 +348,7 @@ export function toTrack(item) {
     album: (item.album && item.album['#text']) || '',
     cover: cover(item.image),
     link: linkFor(artist, title),
+    artist_link: artistLinkFor(artist),
   };
 }
 
@@ -365,7 +393,7 @@ async function durations(env, scrobbles) {
   const known = {};
   const missing = [];
   await Promise.all(keys.map(async ([key, s]) => {
-    const value = await kvGet(env, `dur:${key}`);
+    const value = await kvGet(env, `dur2:${key}`);
     if (value !== null) known[key] = Number(value);
     else missing.push([key, s]);
   }));
@@ -374,13 +402,18 @@ async function durations(env, scrobbles) {
   for (const s of scrobbles) plays[trackKey(s.artist, s.title)] = (plays[trackKey(s.artist, s.title)] || 0) + 1;
   missing.sort((a, b) => plays[b[0]] - plays[a[0]]);
   await Promise.all(missing.slice(0, DURATION_BUDGET).map(async ([key, s]) => {
+    // SoundCloud знает настоящую длину (Last.fm для треков с SC часто отдаёт обрезки по 60–70 с)
     let seconds = 0;
-    try {
-      const info = await lfm(env, 'track.getInfo', { artist: s.artist, track: s.title, autocorrect: '1' });
-      seconds = Math.round(Number((info.track && info.track.duration) || 0) / 1000);
-    } catch (_) { /* трека нет в базе Last.fm — запомним 0, считаем по медиане */ }
+    const sc = await scTrack(env, s.artist, s.title).catch(() => null);
+    if (sc && sc.duration) seconds = sc.duration;
+    if (!seconds) {
+      try {
+        const info = await lfm(env, 'track.getInfo', { artist: s.artist, track: s.title, autocorrect: '1' });
+        seconds = Math.round(Number((info.track && info.track.duration) || 0) / 1000);
+      } catch (_) { /* нигде не нашлось — запомним 0, считаем по медиане */ }
+    }
     known[key] = seconds;
-    await kvPut(env, `dur:${key}`, String(seconds), 60 * 60 * 24 * 60);
+    await kvPut(env, `dur2:${key}`, String(seconds), DURATION_TTL);
   }));
   return known;
 }
@@ -445,7 +478,7 @@ export function computeStats(scrobbles, known, nowTs, tz) {
   for (const s of scrobbles) {
     if (s.ts < b.month) continue;
     const key = trackKey(s.artist, s.title);
-    const entry = counter.get(key) || { title: s.title, artist: s.artist, cover: null, link: s.link, plays: 0 };
+    const entry = counter.get(key) || { title: s.title, artist: s.artist, cover: null, link: s.link, artist_link: s.artist_link || artistLinkFor(s.artist), plays: 0 };
     entry.plays += 1;
     entry.cover = entry.cover || s.cover;
     counter.set(key, entry);

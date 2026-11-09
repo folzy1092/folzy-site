@@ -132,51 +132,28 @@
     toast(`${btn.dataset.copyLabel} скопирован`);
   }));
 
-  // ── Дождь в hero: фирменная деталь старого сайта, тише и только пока hero на экране ──
-  const canvas = $('#rain');
-  if (canvas && !reduced) {
-    const ctx = canvas.getContext('2d');
-    let drops = [];
+  // ── Свет за курсором: проявляет ленты фона (те же обои, что на айфоне) ──
+  // Плавно догоняет курсор и замирает, когда догнал: кадры идут только пока свет движется.
+  const light = $('#backdrop-light');
+  if (light && !reduced && matchMedia('(pointer: fine)').matches) {
+    const target = { x: innerWidth * 0.7, y: innerHeight * 0.3 };
+    const pos = { ...target };
     let raf = 0;
-    let visible = true;
-    const resize = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 2);
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.round(canvas.offsetWidth / 9);
-      drops = Array.from({ length: count }, () => ({
-        x: Math.random() * canvas.offsetWidth,
-        y: Math.random() * canvas.offsetHeight,
-        len: 8 + Math.random() * 16,
-        speed: 4 + Math.random() * 6,
-        alpha: 0.05 + Math.random() * 0.12,
-      }));
-    };
     const frame = () => {
-      const w = canvas.offsetWidth;
-      const h = canvas.offsetHeight;
-      ctx.clearRect(0, 0, w, h);
-      ctx.lineWidth = 1;
-      for (const d of drops) {
-        ctx.strokeStyle = `rgba(220,220,230,${d.alpha})`;
-        ctx.beginPath();
-        ctx.moveTo(d.x, d.y);
-        ctx.lineTo(d.x - d.len * 0.12, d.y + d.len);
-        ctx.stroke();
-        d.y += d.speed;
-        d.x -= d.speed * 0.12;
-        if (d.y > h) { d.y = -d.len; d.x = Math.random() * (w + 40); }
-      }
-      raf = visible ? requestAnimationFrame(frame) : 0;
+      pos.x += (target.x - pos.x) * 0.12;
+      pos.y += (target.y - pos.y) * 0.12;
+      light.style.setProperty('--mx', `${pos.x.toFixed(1)}px`);
+      light.style.setProperty('--my', `${pos.y.toFixed(1)}px`);
+      raf = Math.abs(target.x - pos.x) + Math.abs(target.y - pos.y) > 0.5 ? requestAnimationFrame(frame) : 0;
     };
-    new IntersectionObserver(([e]) => {
-      visible = e.isIntersecting;
-      if (visible && !raf) raf = requestAnimationFrame(frame);
-    }).observe(canvas);
-    addEventListener('resize', resize);
-    resize();
-    raf = requestAnimationFrame(frame);
+    addEventListener('pointermove', (e) => {
+      target.x = e.clientX;
+      target.y = e.clientY;
+      light.classList.add('is-on');
+      if (!raf) raf = requestAnimationFrame(frame);
+    }, { passive: true });
+    document.documentElement.addEventListener('pointerleave', () => light.classList.remove('is-on'));
+    frame();
   }
 
   // ── iPhone: наклон за курсором, поворот по клику, один разворот при первом показе ──
