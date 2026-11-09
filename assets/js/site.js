@@ -108,11 +108,31 @@
       .formatToParts(new Date()).find((p) => p.type === 'timeZoneName').value;
     return name.replace('GMT', 'UTC');
   };
+  // Часы на экране айфона: «00:00» шире, чем «11:11», и без подгонки цифры вылезают за экран.
+  // Меряем строку на canvas (поворот телефона на замер не влияет) и сжимаем по ширине, высота не меняется.
+  const measure = document.createElement('canvas').getContext('2d');
+  const fitLockClock = (el) => {
+    const cs = getComputedStyle(el);
+    measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const text = el.textContent;
+    const width = measure.measureText(text).width + (parseFloat(cs.letterSpacing) || 0) * text.length;
+    const room = el.clientWidth - 16;          // по 8 px воздуха от краёв экрана
+    if (width > 0 && room > 0) el.style.setProperty('--fit', Math.min(1, room / width).toFixed(3));
+  };
+  const fitAllClocks = () => $$('[data-clock="lock"]').forEach(fitLockClock);
+  document.fonts.ready.then(fitAllClocks);
+  addEventListener('resize', fitAllClocks);
+
   const tick = () => {
     const now = new Date();
     $$('[data-clock="short"]').forEach((el) => { el.textContent = `${hm.format(now)} · ${TZ_LABEL || offset()}`; });
     $$('[data-clock="full"]').forEach((el) => { el.textContent = `${hms.format(now)}${TZ_LABEL ? ` ${TZ_LABEL}` : ''}`; });
-    $$('[data-clock="lock"]').forEach((el) => { el.textContent = hm.format(now); });
+    $$('[data-clock="lock"]').forEach((el) => {
+      const text = hm.format(now);
+      if (el.textContent === text) return;
+      el.textContent = text;
+      fitLockClock(el);
+    });
     const d = $('#iphone-date');
     if (d) d.textContent = dateFmt.format(now);
   };
@@ -149,7 +169,7 @@
   }, { passive: true });
 
   // ── Рябь от нажатия на всём кликабельном ──
-  const RIPPLE = '.btn, .card--link, .tab, .icon-btn, a.strip__item, .top__row, .now__last, .chip';
+  const RIPPLE = '.btn, .card--link, .tab, .icon-btn, a.strip__item, .top__row, .now__last';
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest(RIPPLE);
     if (!el || reduced) return;
@@ -162,23 +182,6 @@
     el.append(dot);
     dot.addEventListener('animationend', () => dot.remove());
   });
-
-  // ── Погода в Петербурге для виджета на экране блокировки (open-meteo, без ключа) ──
-  fetch('https://api.open-meteo.com/v1/forecast?latitude=59.94&longitude=30.31&current=temperature_2m'
-    + '&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=Europe%2FMoscow')
-    .then((r) => r.json())
-    .then((d) => {
-      const cur = Math.round(d.current.temperature_2m);
-      const lo = Math.round(d.daily.temperature_2m_min[0]);
-      const hi = Math.round(d.daily.temperature_2m_max[0]);
-      $('#iphone-temp').textContent = cur;
-      $('#iphone-tmin').textContent = lo;
-      $('#iphone-tmax').textContent = hi;
-      // точка на дуге 270°: от минимума (слева снизу) к максимуму (справа снизу)
-      const k = hi > lo ? Math.min(1, Math.max(0, (cur - lo) / (hi - lo))) : 0.5;
-      $('#iphone-temp-dot').setAttribute('transform', `rotate(${-135 + k * 270 - 90} 20 20)`);
-    })
-    .catch(() => { $('#iphone-temp').textContent = '—'; });
 
   // ── iPhone: наклон за курсором, поворот по клику, один разворот при первом показе ──
   const phone = $('#iphone');

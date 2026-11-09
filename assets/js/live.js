@@ -119,7 +119,10 @@
     const changed = key !== lastKey;
     lastKey = key;
 
-    nowEl.dataset.state = t ? 'playing' : 'idle';
+    // тишина: вместо пустой заглушки главным в карточке становится последний трек
+    const last = data.last;
+    const shown = t || last || null;
+    nowEl.dataset.state = t ? 'playing' : (last ? 'last' : 'idle');
     if (changed && !reduced) {
       nowEl.classList.remove('is-swapping');
       void nowEl.offsetWidth;
@@ -127,34 +130,37 @@
     }
 
     const cover = $('#now-cover');
-    cover.style.backgroundImage = t ? bg(t.cover) : '';
-    cover.classList.toggle('has-img', Boolean(t && t.cover));
-    cover.querySelector('use').setAttribute('href', t ? '#i-music' : '#i-music-off');
-    setLink(cover, t && t.link);
-    $('#now-backdrop').style.backgroundImage = t ? bg(t.cover) : '';
-    $('#now-label').textContent = t ? 'Сейчас играет' : 'Тишина';
+    cover.style.backgroundImage = shown ? bg(shown.cover) : '';
+    cover.classList.toggle('has-img', Boolean(shown && shown.cover));
+    cover.querySelector('use').setAttribute('href', shown ? '#i-music' : '#i-music-off');
+    setLink(cover, shown && shown.link);
+    $('#now-backdrop').style.backgroundImage = shown ? bg(shown.cover) : '';
+    $('#now-label').textContent = t ? 'Сейчас играет' : (last ? `Тишина · последний трек ${ago(last.ts)}` : 'Тишина');
 
     const title = $('#now-title');
-    title.textContent = t ? t.title : 'Сейчас ничего не играет';
-    setLink(title, t && (t.link || scSearch(`${t.artist} ${t.title}`)));
+    title.textContent = shown ? shown.title : 'Сейчас ничего не играет';
+    setLink(title, shown && (shown.link || scSearch(`${shown.artist} ${shown.title}`)));
     const artist = $('#now-artist');
-    artist.textContent = t ? t.artist : 'Включу что-нибудь — появится здесь';
-    setLink(artist, t && artistHref(t));
+    artist.textContent = shown ? shown.artist : 'Включу что-нибудь — появится здесь';
+    setLink(artist, shown && artistHref(shown));
 
     setProgress(t);
     document.dispatchEvent(new CustomEvent('folzy:now', {
       detail: { track: t, position: () => (progress ? Math.min(progress.dur, progress.pos + (performance.now() - progress.at) / 1000) : 0) },
     }));
 
-    const last = data.last;
+    // строка «До этого» — только пока что-то играет; в тишине последний трек уже стоит наверху
     const lastEl = $('#now-last');
-    lastEl.hidden = !last || Boolean(t && last.title === t.title && last.artist === t.artist);
-    if (last) {
+    lastEl.hidden = !t || !last || (last.title === t.title && last.artist === t.artist);
+    if (t && last) {
       setLink(lastEl, last.link || scSearch(`${last.artist} ${last.title}`));
       $('#now-last-cover').style.backgroundImage = bg(last.cover);
       $('#now-last-title').textContent = `${last.artist} — ${last.title}`;
-      $('#now-last-meta').textContent = `${t ? 'До этого' : 'Последний'} · ${ago(last.ts)}`;
+      $('#now-last-meta').textContent = `До этого · ${ago(last.ts)}`;
     }
+
+    const status = $('#profile-status');
+    if (status) status.textContent = t ? 'Слушаю музыку' : 'Тишина';
 
     // полоска в hero
     const strip = $('#strip-music');
@@ -164,27 +170,27 @@
     stripIco.style.backgroundImage = t ? bg(t.cover) : '';
     stripIco.classList.toggle('has-cover', Boolean(t && t.cover));
 
-    // экран айфона: виджет плеера только пока трек играет, как на настоящем экране блокировки
-    $('#iphone-np').hidden = !t;
-    if (t) {
-      $('#iphone-np-title').textContent = t.title;
-      $('#iphone-np-artist').textContent = t.artist;
-      $('#iphone-np-cover').style.backgroundImage = bg(t.cover);
+    // экран айфона: плеер с текущим треком, а в тишине — с последним на паузе, как на настоящем экране блокировки
+    $('#iphone-np').hidden = !shown;
+    $('#iphone-np-play').setAttribute('href', t ? '#i-pause' : '#i-play');
+    if (shown) {
+      $('#iphone-np-title').textContent = shown.title;
+      $('#iphone-np-artist').textContent = shown.artist;
+      $('#iphone-np-cover').style.backgroundImage = bg(shown.cover);
     }
   };
 
   // ── Статистика ──
   const renderStats = (s) => {
     statsEl.dataset.state = 'ready';
-    const approx = s.estimated ? '≈ ' : '';
     for (const name of ['today', 'week', 'month', 'avg_day']) {
       const block = s[name] || { tracks: 0, seconds: 0 };
-      countUp($(`[data-stat="${name}"]`), block.seconds, (v) => (v ? approx : '') + duration(v));
+      countUp($(`[data-stat="${name}"]`), block.seconds, duration);
       $(`[data-stat-tracks="${name}"]`).textContent = tracks(block.tracks);
     }
-    $('#strip-today').textContent = `${s.today.seconds ? approx : ''}${duration(s.today.seconds)} · ${tracks(s.today.tracks)}`;
+    $('#strip-today').textContent = `${duration(s.today.seconds)} ·${tracks(s.today.tracks)}`;
     $('#stats-note').textContent = s.estimated
-      ? '≈ — длительность части треков ещё уточняется, время посчитано примерно.'
+      ? 'Время примерное: длительность части треков ещё уточняется.'
       : '';
 
     const top = s.top || [];
@@ -211,6 +217,9 @@
     $('#now-artist').removeAttribute('href');
     $('#now-last').hidden = true;
     $('#iphone-np').hidden = true;
+    $('#now-cover').style.backgroundImage = '';
+    $('#now-cover').classList.remove('has-img');
+    $('#now-backdrop').style.backgroundImage = '';
     setProgress(null);
     $('#strip-music').textContent = 'Нет данных о музыке';
   };

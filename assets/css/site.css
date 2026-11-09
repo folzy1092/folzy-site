@@ -1,29 +1,11 @@
 /* folzy.ru — в стиле iOS 27, Liquid Glass.
    Поверхности — стекло: полупрозрачное, с размытием и насыщением того, что под ним, светлой кромкой сверху
    и бликом, который идёт за курсором. В Chrome/Edge стекло ещё и преломляет фон у краёв (SVG-фильтр #lg-glass).
-   Фон — тёмная глубина из мягких графитовых и индиговых пятен (палитра обоев владельца); они плавно уходят
-   от курсора, как параллакс обоев на айфоне. Цвет один — оранжевый SoundCloud, только как знак «играет».
+   Фон — статичная графитовая картинка. Цвета нет: акцент — светлый серый.
    Шрифт: на устройствах Apple — системный SF Pro, у остальных Inter, самый близкий к нему открытый гротеск. */
 
 :root {
-  --bg: #121212;
-  --surface: #1b1b1b;
-  --surface-2: #232323;
-  --surface-3: #2d2d2d;
-  --surface-4: #363636;
-  --line: rgba(255, 255, 255, 0.06);
-  --line-strong: rgba(255, 255, 255, 0.13);
-  --text: #e9e9e9;
-  --muted: #ababab;
-  --faint: #8c8c8c;
-  --accent: #ff5500;
-
-  --r-xl: 26px;
-  --r-lg: 18px;
   --r-md: 12px;
-
-  --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.4, 0.5, 1);
@@ -47,22 +29,20 @@ body {
 img { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
+h1, h2, h3 { line-height: 1.1; font-weight: 600; }
 :focus-visible { outline: 2px solid var(--text); outline-offset: 3px; border-radius: 8px; }
 
-.mono { font-family: var(--mono); font-feature-settings: 'zero' 0; }
+.mono { font-variant-numeric: tabular-nums; }
 .wrap { width: min(1120px, 100% - 40px); margin-inline: auto; }
-.label { font-size: 12px; color: var(--faint); letter-spacing: 0.01em; }
+.label { font-size: 12px; color: var(--faint); }
 .ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
 /* ── Фон: поле штрихов (assets/js/site.js, «Фон») ─────────── */
-.fx { position: fixed; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
 
 /* ── Рябь от нажатия ───────────────────────────────────── */
 .has-ripple { position: relative; overflow: hidden; isolation: isolate; }
 .ripple {
   position: absolute; z-index: 0; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, .08) 45%, transparent 70%);
   transform: scale(0); animation: ripple .65s var(--ease) forwards;
 }
 .btn--light .ripple { background: radial-gradient(circle, rgba(0, 0, 0, .18), transparent 70%); }
@@ -76,19 +56,16 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 }
 .btn .ico { width: 16px; height: 16px; transition: transform .35s var(--spring); }
 .btn:hover .ico use[href="#i-arrow"], .btn:hover > .ico:last-child { transform: translate(2px, -2px); }
-.btn:active { transform: scale(0.96); border-radius: 14px; }
 .btn--sm { height: 36px; padding: 0 14px; font-size: 14px; }
 .btn--lg { height: 52px; padding: 0 26px; font-size: 15px; }
-.btn--light { background: var(--text); color: #111; }
+.btn--light { color: #111; }
 .btn--light:hover { background: #fff; }
-.btn--ghost { background: var(--surface-2); border: 1px solid var(--line); }
-.btn--ghost:hover { background: var(--surface-3); border-color: var(--line-strong); }
 
 .icon-btn {
-  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px;
-  background: var(--surface-3); color: var(--muted); transition: color .2s, background-color .2s;
+  width: 34px; height: 34px; display: grid; place-items: center;
+  color: var(--muted);
 }
-.icon-btn:hover { color: var(--text); background: var(--surface-4); border-radius: 17px; }
+.icon-btn:hover { color: var(--text); }
 .icon-btn:active { transform: scale(.92); }
 .icon-btn { transition: color .2s, background-color .2s, border-radius .35s var(--morph), transform .2s var(--spring); }
 .icon-btn .ico { width: 16px; height: 16px; }
@@ -97,26 +74,20 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 
 .badge-ico {
   width: 40px; height: 40px; flex: none; display: grid; place-items: center;
-  border-radius: 12px; background: var(--surface-3); color: var(--text);
+  color: var(--text);
 }
 
 /* ── Навигация ──────────────────────────────────────────── */
 .nav {
-  position: fixed; inset: 0 0 auto; z-index: 50; height: var(--nav-h);
+  position: fixed; inset: 0 0 auto; z-index: 50;
   transition: background-color .35s var(--ease), border-color .35s, transform .45s var(--ease);
   border-bottom: 1px solid transparent;
 }
-.nav.is-scrolled {
-  background: rgba(18, 18, 18, 0.84);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border-color: var(--line);
-}
-.nav__inner { height: 100%; width: min(1120px, 100% - 40px); margin-inline: auto; display: flex; align-items: center; gap: 24px; }
+.nav__inner { width: min(1120px, 100% - 40px); margin-inline: auto; display: flex; align-items: center; gap: 24px; }
 .nav__brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
 .nav__online {
   display: inline-flex; align-items: center; gap: 7px; margin-right: auto; padding: 5px 11px; border-radius: 999px;
-  background: var(--surface-2); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted);
+  font-size: 12.5px; color: var(--muted);
 }
 .nav__online i { width: 6px; height: 6px; border-radius: 50%; background: #34d399; }   /* живой счётчик — реальное состояние */
 .nav__online[hidden] + * { margin-left: auto; }
@@ -129,7 +100,7 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 .nav__links a:hover, .nav__links a.is-active { color: var(--text); }
 .nav__pill {
   position: absolute; top: 0; left: 0; height: 100%; border-radius: 999px;
-  background: var(--surface-3); opacity: 0;
+  opacity: 0;
   transition: transform .5s var(--spring), width .5s var(--spring), opacity .3s;
 }
 
@@ -154,17 +125,16 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 .hero__actions { display: flex; gap: 10px; margin-top: 32px; flex-wrap: wrap; }
 .hero__avatar {
   width: clamp(200px, 26vw, 280px); aspect-ratio: 1; border-radius: 34% / 34%;
-  overflow: hidden; background: var(--surface-2); border: 1px solid var(--line);
+  overflow: hidden; background: var(--surface-2);
 }
 .hero__avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 .strip {
   margin-top: 64px; display: grid; grid-template-columns: repeat(3, 1fr);
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden;
+  overflow: hidden;
 }
 .strip__item { display: flex; align-items: center; gap: 14px; padding: 16px 18px; min-width: 0; transition: background-color .25s; }
 .strip__item + .strip__item { border-left: 1px solid var(--line); }
-a.strip__item:hover { background: var(--surface-2); }
 .strip__item .badge-ico { width: 36px; height: 36px; border-radius: 10px; }
 .strip__body { display: flex; flex-direction: column; min-width: 0; }
 .strip__value { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -177,54 +147,50 @@ a.strip__item:hover .badge-ico { border-radius: 18px; }
 /* ── Секции ─────────────────────────────────────────────── */
 .section { padding: 88px 0 24px; }
 .section__title { display: flex; align-items: baseline; gap: 14px; font-size: clamp(40px, 6vw, 60px); letter-spacing: -0.035em; margin-bottom: 32px; }
-.section__num { font-family: var(--mono); font-size: 13px; font-weight: 400; color: var(--faint); letter-spacing: 0; }
+.section__num { font-size: 13px; font-weight: 400; color: var(--faint); }
 
 .panel, .card {
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl);
+  border-radius: var(--r-xl);
 }
 .panel { padding: 22px; }
 .panel__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 
 /* Табы проектов */
-.tabs { position: relative; display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; }
+.tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 18px; }
 .tab {
   position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px;
   height: 38px; padding: 0 16px; border-radius: 999px; font-size: 14px; color: var(--muted);
-  transition: color .35s var(--ease);
 }
 .tab .ico { width: 16px; height: 16px; }
-.tab:hover { color: var(--text); background: var(--surface-3); }
+.tab:hover { color: var(--text); }
 .tab.is-active:hover { background: none; }
 .tab { transition: color .35s var(--ease), background-color .25s; }
 .tab.is-active { color: #111; }
 .tabs__pill {
-  position: absolute; top: 0; left: 0; border-radius: 999px; background: var(--text);
+  position: absolute; top: 0; left: 0; border-radius: 999px;
   transition: transform .55s var(--spring), width .55s var(--spring), height .3s;
 }
 
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 901px) { .cards:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, 1fr); } }
 .cards.is-entering .card { animation: card-in .6s var(--ease) both; }
 .cards.is-entering .card:nth-child(2) { animation-delay: .05s; }
 .cards.is-entering .card:nth-child(3) { animation-delay: .1s; }
 .cards.is-entering .card:nth-child(4) { animation-delay: .15s; }
 @keyframes card-in { from { opacity: 0; transform: translateY(14px) scale(.98); } }
 
-.card { position: relative; display: flex; flex-direction: column; padding: 22px; min-height: 220px; border-radius: 20px;
-  transition: background-color .3s var(--ease), border-color .3s, transform .45s var(--spring), border-radius .4s var(--morph); }
-.card--link:hover { background: var(--surface-2); border-color: var(--line-strong); border-radius: 32px; }
-.card--link:active { transform: scale(.985); border-radius: 38px; transition-duration: .15s, .15s, .2s, .2s; }
+.card { display: flex; flex-direction: column; padding: 22px; min-height: 220px; }
 .card .badge-ico, .fact .badge-ico { transition: border-radius .4s var(--morph), background-color .3s, color .3s; }
-.card--link:hover .badge-ico { border-radius: 20px; background: var(--text); color: var(--bg); }
 .card__head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 26px; }
 .card__go { color: var(--faint); transition: transform .4s var(--spring), color .25s; }
 .card--link:hover .card__go { color: var(--text); transform: translate(3px, -3px); }
 .card h3 { font-size: 19px; margin-bottom: 8px; }
 .card p { font-size: 14.5px; color: var(--muted); }
 .card__meta { margin-top: auto; padding-top: 18px; font-size: 12.5px; color: var(--faint); }
-.card--wide { grid-column: span 2; }
+.card--wide { grid-column: 1 / -1; }
 
 /* ── Live ───────────────────────────────────────────────── */
-.demo-note { margin: -16px 0 18px; font-size: 13px; color: var(--faint); font-family: var(--mono); }
+.demo-note { margin: -16px 0 18px; font-size: 13px; color: var(--faint); }
 .live { display: grid; grid-template-columns: 1.12fr 1fr; gap: 12px; }
 
 /* Карточка трека: фон — размытая обложка, как в Apple Music; без трека — тихая и пустая */
@@ -236,12 +202,10 @@ a.strip__item:hover .badge-ico { border-radius: 18px; }
 }
 .now::after {
   content: ''; position: absolute; inset: 0; z-index: -1;
-  background: linear-gradient(180deg, rgba(14, 14, 22, .25) 0%, rgba(14, 14, 22, .82) 75%);
 }
 .now[data-state="playing"] .now__backdrop { opacity: .7; }
 
 .now__status { display: inline-flex; align-items: center; gap: 9px; }
-.now[data-state="playing"] .now__status .label { color: var(--accent); }
 .eq { display: none; gap: 2.5px; height: 12px; align-items: flex-end; }
 .eq i { width: 2.5px; height: 100%; border-radius: 2px; background: var(--accent); transform-origin: bottom; animation: eq 1s ease-in-out infinite; }
 .eq i:nth-child(2) { animation-delay: -.35s; }
@@ -276,14 +240,12 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 
 .now__last {
   display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 10px 14px 10px 10px;
-  border-radius: 14px; background: rgba(255, 255, 255, .05); transition: background-color .25s;
+  border-radius: 14px;
 }
 .now__body + .now__last { margin-top: 22px; }
-.now__last:hover { background: rgba(255, 255, 255, .09); border-radius: 22px; }
 .now__last { transition: background-color .25s, border-radius .4s var(--morph); }
-.now__listen { margin-top: 18px; }
 .now__listen.is-on { background: var(--text); color: var(--bg); border-color: transparent; }
-.now__player { margin-top: 16px; border-radius: 10px; overflow: hidden; }
+.now__player { overflow: hidden; }
 .now__player iframe { display: block; width: 100%; height: 20px; border: 0; }
 .now__last-cover { width: 38px; height: 38px; flex: none; border-radius: 9px; background: var(--surface-3) center / cover; }
 .now__last-text { display: flex; flex-direction: column; min-width: 0; }
@@ -296,8 +258,8 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 @keyframes swap { 0% { opacity: 0; transform: translateY(10px); filter: blur(6px); } }
 
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.tile { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: var(--r-lg); background: var(--surface-2); border: 1px solid var(--line); }
-.tile__value { font-size: clamp(22px, 3vw, 28px); font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
+.tile { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: var(--r-lg); }
+.tile__value { font-size: clamp(22px, 3vw, 28px); letter-spacing: -0.02em; line-height: 1.2; }
 .tile__sub { font-size: 12.5px; color: var(--faint); }
 .stats__note { margin-top: 14px; font-size: 12.5px; color: var(--faint); min-height: 1em; }
 [data-state="loading"] .tile__value { color: var(--faint); }
@@ -306,12 +268,11 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 .top__list { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .top__row {
   position: relative; display: grid; grid-template-columns: 20px 46px minmax(0, 1fr) auto; align-items: center; gap: 12px;
-  padding: 8px 16px 8px 12px; border-radius: 14px; background: var(--surface-2); transition: background-color .25s;
+  padding: 8px 16px 8px 12px; border-radius: 14px;
 }
-.top__row:hover { background: var(--surface-3); border-radius: 22px; }
 .top__row { transition: background-color .25s, border-radius .4s var(--morph); }
 .top__row:active { transform: scale(.99); }
-.top__n { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+.top__n { font-size: 12px; color: var(--faint); }
 .top__cover {
   width: 46px; height: 46px; border-radius: 10px; background: var(--surface-3) center / cover; display: grid; place-items: center; color: var(--faint);
   box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .8);
@@ -323,7 +284,7 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 .top__title::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }   /* вся строка — ссылка на трек */
 .top__artist { position: relative; z-index: 1; font-size: 13px; color: var(--muted); transition: color .2s; }
 .top__artist:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
-.top__plays { font-family: var(--mono); font-size: 15px; text-align: right; line-height: 1.1; }
+.top__plays { font-size: 15px; text-align: right; line-height: 1.1; }
 .top__plays small { display: block; font-size: 10.5px; color: var(--faint); }
 
 /* ── Обо мне ────────────────────────────────────────────── */
@@ -341,9 +302,6 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 .phone-stage {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
   padding: 44px 22px 26px; perspective: 1600px; overflow: hidden;
-  background:
-    radial-gradient(70% 55% at 50% 42%, rgba(255, 255, 255, .05), transparent 70%),
-    var(--surface);
 }
 .phone-stage::after {        /* тень на «полу» под телефоном */
   content: ''; position: absolute; left: 50%; bottom: 74px; width: 210px; height: 26px; transform: translateX(-50%);
@@ -384,16 +342,14 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   font-family: -apple-system, 'SF Pro Text', var(--font); font-variant-numeric: tabular-nums;
 }
 .iphone__status {
-  position: absolute; top: 11px; left: 18px; right: 14px; display: flex; justify-content: space-between; align-items: center;
+  position: absolute; top: 11px; left: 18px; right: 14px; display: flex; align-items: center;
   font-size: 10.5px; font-weight: 600;
 }
-.iphone__carrier { display: inline-flex; align-items: center; gap: 3px; }
-.iphone__carrier .ico { width: 10px; height: 10px; }
 .iphone__status-icons { display: flex; gap: 3.5px; align-items: center; }
 .iphone__status-icons .ico { width: 11.5px; height: 11.5px; }
 .iphone__battery {
-  position: relative; min-width: 20px; height: 10.5px; padding: 0 3px; border-radius: 3.5px; margin-right: 2px;
-  background: rgba(255, 255, 255, .5); color: #1d1d24; font-size: 8px; font-weight: 800; line-height: 10.5px; text-align: center;
+  position: relative; margin-right: 2px;
+  color: #1d1d24; font-size: 8px; font-weight: 800; line-height: 10.5px; text-align: center;
 }
 .iphone__battery::after { content: ''; position: absolute; right: -2.5px; top: 3.5px; width: 1.5px; height: 3.5px; border-radius: 0 1px 1px 0; background: rgba(255, 255, 255, .5); }
 .iphone__island { position: absolute; top: 8px; left: 50%; width: 31%; height: 22px; transform: translateX(-50%); border-radius: 999px; background: #000; }
@@ -401,21 +357,15 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 .iphone__date::first-letter { text-transform: uppercase; }
 /* часы как в iOS 26: узкие высокие цифры из «стекла» во всю ширину */
 .iphone__time {
-  position: absolute; top: 64px; left: 0; right: 0; text-align: center;
+  position: absolute; left: 0; right: 0; text-align: center;
   font-family: 'Oswald', 'Bahnschrift Condensed', 'Arial Narrow', sans-serif; font-weight: 500;
-  font-size: 92px; line-height: 1; letter-spacing: -1px;
-  transform: scaleY(1.75); transform-origin: top center;
+  letter-spacing: -1px;
+  transform-origin: top center;
   color: transparent;
-  background: linear-gradient(180deg, rgba(196, 199, 235, .62) 0%, rgba(150, 154, 205, .48) 55%, rgba(120, 122, 170, .38) 100%);
-  -webkit-background-clip: text; background-clip: text;
-  filter: drop-shadow(0 .6px 0 rgba(255, 255, 255, .45)) drop-shadow(0 6px 10px rgba(5, 5, 20, .35));
 }
 
 .iphone__np {
-  position: absolute; left: 7px; right: 7px; top: 54.5%; padding: 10px 11px 9px; border-radius: 19px;
-  background: rgba(40, 42, 64, .38); border: .5px solid rgba(255, 255, 255, .2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
-  backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  position: absolute; left: 7px; right: 7px; padding: 10px 11px 9px; border-radius: 19px;
 }
 .iphone__np-row { display: flex; gap: 8px; align-items: center; }
 .iphone__np-cover { width: 33px; height: 33px; flex: none; border-radius: 6px; background: rgba(255, 255, 255, .14) center / cover; }
@@ -432,27 +382,9 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 .iphone__np-controls .ico--big { width: 19px; height: 19px; }
 .iphone__np-controls .ico--dim { width: 12px; height: 12px; color: rgba(255, 255, 255, .5); }
 
-.iphone__widgets { position: absolute; top: 79.5%; left: 0; right: 0; display: flex; justify-content: center; gap: 18px; }
-.iphone__w { position: relative; width: 34px; height: 34px; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
-.iphone__ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(90deg); }
-.iphone__ring circle { fill: none; stroke-width: 3.2; stroke-linecap: round; }
-.iphone__ring-track { stroke: rgba(255, 255, 255, .28); }
-.iphone__ring-arc { stroke-dasharray: 75.4 100.5; transform: rotate(45deg); transform-origin: 20px 20px; }
-.iphone__ring-fill { stroke: rgba(255, 255, 255, .9); stroke-dasharray: 80 100.5; transform: rotate(-90deg); transform-origin: 20px 20px; }
-.iphone__ring-dot { fill: #fff; stroke: none !important; transform-origin: 20px 20px; }
-.iphone__w b { position: relative; font-weight: 600; font-size: 13px; }
-.iphone__w small { position: absolute; bottom: -1px; left: 6px; right: 6px; display: flex; justify-content: space-between; font-size: 6.5px; color: rgba(255, 255, 255, .7); }
-.iphone__w-ico { width: 15px; height: 15px; }
-.iphone__w--app { display: flex; flex-direction: column; gap: 2px; height: auto; }
-.iphone__app { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .2); }
-.iphone__app .ico { width: 16px; height: 8px; }
-.iphone__w--app i { font-style: normal; font-size: 7px; font-weight: 600; }
-
 .iphone__dock { position: absolute; left: 22px; right: 22px; bottom: 18px; display: flex; justify-content: space-between; }
 .iphone__round {
   width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-  background: rgba(30, 32, 50, .42); border: .5px solid rgba(255, 255, 255, .16);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
 .iphone__round .ico { width: 13px; height: 13px; }
 .iphone__home { position: absolute; bottom: 5px; left: 50%; width: 36%; height: 3.5px; transform: translateX(-50%); border-radius: 2px; background: rgba(255, 255, 255, .92); }
@@ -461,40 +393,54 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   background: linear-gradient(118deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, .02) 26%, transparent 40%);
 }
 
-/* Спинка: матовое стекло, приподнятое плато с тремя камерами */
+/* Спинка: матовое стекло Black Titanium, приподнятое плато с тремя камерами, логотип Apple */
+.iphone__back {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 3px),
+    linear-gradient(135deg, #8a8b93 0%, #4a4b52 14%, #2b2c31 40%, #232428 60%, #4d4e55 86%, #92939a 100%);
+}
 .iphone__back::before {
   content: ''; position: absolute; inset: 3.5px; border-radius: 36.5px;
   background:
-    radial-gradient(120% 70% at 30% 0%, rgba(255, 255, 255, .07), transparent 60%),
-    linear-gradient(162deg, #3b3c47 0%, #2a2b34 45%, #20212a 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
+    radial-gradient(90% 50% at 30% 0%, rgba(255, 255, 255, .05), transparent 70%),
+    linear-gradient(165deg, #323338 0%, #2b2c30 50%, #26272b 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05), inset 0 0 14px rgba(0, 0, 0, .25);
+}
+.iphone__apple {
+  position: absolute; left: 50%; top: 50%; width: 17.5%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  fill: rgba(168, 170, 180, .42); pointer-events: none;
 }
 .iphone__plateau {
-  position: absolute; top: 15px; left: 15px; width: 47%; aspect-ratio: 1; border-radius: 30px;
-  background: linear-gradient(145deg, #4b4c58, #2d2e37 60%, #3a3b46);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 -1px 0 rgba(0, 0, 0, .45), 0 8px 16px -8px rgba(0, 0, 0, .8);
+  position: absolute; top: 2.2%; left: 4.5%; width: 52%; aspect-ratio: 1; border-radius: 27%;
+  background:
+    radial-gradient(120% 90% at 18% 8%, rgba(255, 255, 255, .06), transparent 60%),
+    linear-gradient(150deg, #3a3b41, #2f3035 55%, #2a2b2f);
+  box-shadow:
+    inset 1.5px 1.5px 1px rgba(255, 255, 255, .16), inset -1px -1px 1px rgba(0, 0, 0, .35),
+    5px 8px 12px -3px rgba(0, 0, 0, .6), 1px 2px 3px rgba(0, 0, 0, .35);
 }
 .lens {
-  position: absolute; width: 43%; aspect-ratio: 1; border-radius: 50%;
-  background: conic-gradient(from 210deg, #9a9ba6, #3a3b44, #b0b1bb, #2c2d35, #9a9ba6);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, .65), 0 0 0 1.5px #18191e;
+  position: absolute; width: 41%; aspect-ratio: 1; border-radius: 50%;
+  background: conic-gradient(from 200deg, #e4e5ea, #7d7e87, #f1f2f6, #5f6068, #d6d7dd, #8a8b94, #e4e5ea);
+  box-shadow: 1.5px 3px 5px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .5);
 }
 .lens i {
   position: absolute; inset: 9%; border-radius: 50%; overflow: hidden;
-  background: radial-gradient(circle, #0c1022 0 36%, #000 38% 50%, #15161d 52% 100%);
-  box-shadow: inset 0 0 0 2px #050507;
+  background: radial-gradient(circle, #0b0d16 0 55%, #000 58% 100%);
+  box-shadow: inset 0 0 0 1.5px #0a0a0c, inset 1px 2px 3px rgba(0, 0, 0, .9), 0 0 0 1px rgba(255, 255, 255, .22);
 }
 .lens i::before {
-  content: ''; position: absolute; inset: 20%; border-radius: 50%;
+  content: ''; position: absolute; inset: 14%; border-radius: 50%;
   background:
-    radial-gradient(circle at 34% 30%, rgba(160, 168, 255, .6), transparent 28%),
-    radial-gradient(circle at 66% 70%, rgba(90, 200, 255, .28), transparent 34%),
-    radial-gradient(circle, #10163a 0 42%, #04050c 72%);
+    radial-gradient(circle at 32% 28%, rgba(170, 160, 255, .55), transparent 22%),
+    radial-gradient(circle at 68% 72%, rgba(80, 150, 255, .3), transparent 30%),
+    radial-gradient(circle, #121533 0 38%, #05060f 70%, #000 100%);
+  box-shadow: 0 0 0 2px #000;
 }
-.l1 { top: 6%; left: 6%; } .l2 { top: 51%; left: 6%; } .l3 { top: 28.5%; left: 51%; }
-.flash { position: absolute; top: 9%; right: 11%; width: 14%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #fff7e0, #dcd2b1 60%, #a99d79); box-shadow: 0 0 0 1.5px #23242a; }
-.lidar { position: absolute; bottom: 11%; right: 13%; width: 13%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #2b2c35, #08080b); box-shadow: 0 0 0 1.5px #1e1f25; }
-.mic { position: absolute; top: 46%; right: 19%; width: 4%; aspect-ratio: 1; border-radius: 50%; background: #0a0a0d; }
+.l1 { top: 5%; left: 5%; } .l2 { top: 54%; left: 5%; } .l3 { top: 29.5%; left: 54%; }
+.flash { position: absolute; top: 13%; right: 13%; width: 11%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #fffaea, #efe4c2 55%, #bfb18b); box-shadow: 0 0 0 1.5px #1c1d21, 0 0 0 2.5px rgba(255, 255, 255, .1); }
+.lidar { position: absolute; bottom: 14%; right: 15%; width: 11%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #23242b, #050507); box-shadow: 0 0 0 1.5px #17181c, 0 0 0 2.5px rgba(255, 255, 255, .08); }
+.mic { position: absolute; bottom: 29%; right: 7%; width: 3.2%; aspect-ratio: 1; border-radius: 50%; background: #0a0a0d; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .12); }
 .iphone__sheen {
   position: absolute; inset: 3.5px; border-radius: 36.5px; pointer-events: none;
   background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, .055) 46%, transparent 60%);
@@ -503,11 +449,8 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 .phone-info { display: flex; flex-direction: column; gap: 12px; }
 .phone-intro h3 { font-size: 26px; letter-spacing: -0.02em; margin-bottom: 10px; }
 .phone-intro p { color: var(--muted); font-size: 15px; max-width: 36em; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-.chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: var(--surface-3); font-size: 13.5px; }
-.chip .ico { width: 15px; height: 15px; color: var(--muted); }
 .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.spec { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); font-size: 14.5px; }
+.spec { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: var(--r-lg); font-size: 14.5px; }
 
 /* ── Связь ──────────────────────────────────────────────── */
 .contacts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -520,7 +463,7 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
 .donate__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .footer { padding: 64px 0 40px; color: var(--faint); font-size: 13px; }
-.footer__inner { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 22px; }
+.footer__inner { display: flex; border-top: 1px solid var(--line); padding-top: 22px; }
 
 .toast {
   position: fixed; left: 50%; bottom: 28px; z-index: 60; transform: translate(-50%, 24px); opacity: 0;
@@ -540,21 +483,14 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   .nav__links a { padding: 7px 10px; }
 }
 @media (max-width: 720px) {
-  .now__body { grid-template-columns: 104px minmax(0, 1fr); gap: 16px; }
-  .now__cover { width: 104px; border-radius: 12px; }
-  .now__title { font-size: 20px; }
   :root { --nav-h: 58px; }
   .nav__links { display: none; }
-  .hero { padding-top: calc(var(--nav-h) + 40px); }
-  .hero__grid { grid-template-columns: 1fr; gap: 36px; }
-  .hero__avatar { order: -1; width: 128px; border-radius: 30px; }
-  .strip { grid-template-columns: 1fr; margin-top: 44px; }
+  .hero__grid { grid-template-columns: 1fr; }
+  .strip { grid-template-columns: 1fr; }
   .strip__item + .strip__item { border-left: 0; border-top: 1px solid var(--line); }
   .cards, .contacts, .facts, .specs, .top__list { grid-template-columns: 1fr; }
-  .card--wide { grid-column: auto; }
   .card { min-height: 0; }
-  .tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; border-radius: 22px; }
-  .section { padding-top: 64px; }
+  .tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .hero__actions .btn { flex: 1; }
 }
 
@@ -574,8 +510,6 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
   --bg: #08080b;
   --text: #f2f2f7;
-  --muted: rgba(235, 235, 245, .62);
-  --faint: rgba(235, 235, 245, .48);
   --line: rgba(255, 255, 255, .1);
   --line-strong: rgba(255, 255, 255, .22);
   --surface: rgba(255, 255, 255, .055);
@@ -592,32 +526,13 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .tile__value, .strip__value.mono, .top__plays, .progress__time, .fact dd.mono { font-family: var(--font); font-variant-numeric: tabular-nums; font-weight: 600; }
 
 /* ── Фон: глубина ── */
-.fx { display: none; }
-.ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: radial-gradient(120% 90% at 50% -10%, #15151d 0%, var(--bg) 60%); pointer-events: none; }
-.ambient i {
-  position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform;
-  transform: translate3d(var(--px, 0), var(--py, 0), 0);
-}
-.ambient__a { width: 62vmax; height: 62vmax; left: -18vmax; top: -22vmax; background: radial-gradient(circle, rgba(92, 100, 150, .42), transparent 65%); }
-.ambient__b { width: 54vmax; height: 54vmax; right: -20vmax; top: 6vmax; background: radial-gradient(circle, rgba(118, 96, 170, .26), transparent 65%); }
-.ambient__c { width: 48vmax; height: 48vmax; left: 18vmax; bottom: -26vmax; background: radial-gradient(circle, rgba(150, 156, 176, .16), transparent 65%); }
-.ambient__d { width: 30vmax; height: 30vmax; right: 8vmax; bottom: 4vmax; background: radial-gradient(circle, rgba(70, 120, 170, .16), transparent 65%); }
 
 /* ── Стекло ── */
-.glass, .panel, .card, .strip, .tabs, .spec, .nav__inner, .nav__online, .btn--ghost, .icon-btn, .tile, .top__row, .now__last, .chip, .badge-ico {
+.glass, .panel, .card, .strip, .tabs, .spec, .nav__inner, .nav__online, .btn--ghost, .icon-btn, .tile, .top__row, .now__last, .badge-ico {
   --lx: 30%; --ly: 0%;
 }
 .panel, .card, .strip, .tabs, .spec {
   position: relative;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, .075), rgba(255, 255, 255, .025)),
-    rgba(28, 28, 34, .38);
-  border: 1px solid rgba(255, 255, 255, .09);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .16),
-    inset 0 -1px 0 rgba(255, 255, 255, .04),
-    0 24px 50px -28px rgba(0, 0, 0, .75);
 }
 /* блик по кромке: светлая дуга там, где курсор (или сверху слева в покое) */
 .panel::before, .card::before, .strip::before, .spec::before, .tabs::before {
@@ -637,8 +552,6 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 }
 .card:hover::after, .strip:hover::after { opacity: 1; }
 
-/* преломление — только у крупных «живых» поверхностей, чтобы не грузить страницу */
-
 /* ── Навигация: плавающая стеклянная капсула ── */
 .nav { height: calc(var(--nav-h) + 12px); padding-top: 12px; }
 .nav.is-scrolled { background: none; border-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -646,54 +559,33 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   height: var(--nav-h); padding: 0 10px 0 22px; border-radius: 999px; border: 1px solid transparent;
   transition: background-color .4s var(--ease), border-color .4s, box-shadow .4s, backdrop-filter .4s;
 }
-.nav.is-scrolled .nav__inner {
-  background: linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .03)), rgba(24, 24, 30, .42);
-  border-color: rgba(255, 255, 255, .12);
-  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 16px 40px -18px rgba(0, 0, 0, .8);
-}
 .nav__pill { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
-.nav__online { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .1); }
 
 /* ── Кнопки: стеклянные капсулы, при нажатии «продавливаются» ── */
-.btn--ghost {
-  background: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04));
-  border: 1px solid rgba(255, 255, 255, .14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22);
-  backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
-}
-.btn--ghost:hover { background: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .06)); border-color: rgba(255, 255, 255, .22); }
+.btn--ghost:hover { border-color: rgba(255, 255, 255, .22); }
 .btn--light { background: #f5f5f7; box-shadow: inset 0 1px 0 #fff, 0 10px 24px -12px rgba(255, 255, 255, .35); }
 .btn:active, .btn:active.btn--ghost { transform: scale(.95); border-radius: 999px; }
-.icon-btn { background: rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14); border-radius: 50%; }
-.icon-btn:hover { background: rgba(255, 255, 255, .16); border-radius: 50%; }
+.icon-btn { border-radius: 50%; }
+.icon-btn:hover { border-radius: 50%; }
 
 /* Нажатие — не рябь, а мягкое свечение в точке касания, как стекло в iOS */
 .ripple { background: radial-gradient(circle, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, .1) 35%, transparent 65%); animation-duration: .7s; }
 
 /* ── Карточки ── */
 .card { border-radius: var(--r-xl); transition: transform .5s var(--spring), border-color .3s, box-shadow .4s; }
-.card--link:hover { border-radius: var(--r-xl); transform: translateY(-4px) scale(1.01); border-color: rgba(255, 255, 255, .16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 34px 60px -30px rgba(0, 0, 0, .85); background:
-    linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .035)), rgba(30, 30, 38, .42); }
+.card--link:hover { border-radius: var(--r-xl); transform: translateY(-4px) scale(1.01); border-color: rgba(255, 255, 255, .16); }
 .card--link:active { transform: scale(.975); border-radius: var(--r-xl); transition-duration: .18s; }
-.badge-ico { background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22); border-radius: 13px; }
+.badge-ico { border-radius: 13px; }
 .card--link:hover .badge-ico { border-radius: 13px; background: #f5f5f7; color: #111; }
 .tabs { border-radius: 999px; }
 .tabs__pill { background: #f5f5f7; box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .6); }
 .tab:hover { background: rgba(255, 255, 255, .07); }
-.tile { background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .07); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07); }
-.top__row { background: rgba(255, 255, 255, .045); }
-.top__row:hover { background: rgba(255, 255, 255, .09); border-radius: 18px; }
-.now__last { background: rgba(255, 255, 255, .07); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
+.top__row:hover { border-radius: 18px; }
 .now__last:hover { border-radius: 20px; }
-.chip { background: rgba(255, 255, 255, .08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
 .strip { border-radius: 24px; }
 .strip__item + .strip__item { border-color: rgba(255, 255, 255, .07); }
 a.strip__item:hover { background: rgba(255, 255, 255, .05); }
 .fact dl > div { border-color: rgba(255, 255, 255, .07); }
-.phone-stage { background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02)), rgba(28, 28, 34, .38); }
-.now::after { background: linear-gradient(180deg, rgba(14, 14, 20, .15) 0%, rgba(14, 14, 20, .7) 80%); }
 .footer__inner { border-color: rgba(255, 255, 255, .08); }
 
 /* ── Экран блокировки: без оператора и виджетов, плеер — Liquid Glass ── */
@@ -702,37 +594,22 @@ a.strip__item:hover { background: rgba(255, 255, 255, .05); }
 .iphone__battery i { display: block; width: 72%; height: 100%; border-radius: 1.5px; background: #fff; }
 .iphone__np {
   top: 61%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .05));
-  border: .5px solid rgba(255, 255, 255, .32);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 1px rgba(255, 255, 255, .12), 0 10px 24px -14px rgba(0, 0, 0, .6);
-  backdrop-filter: blur(12px) saturate(200%); -webkit-backdrop-filter: blur(12px) saturate(200%);
 }
 .iphone__np::before {      /* блик стекла: светлая дуга по верхнему краю */
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: linear-gradient(115deg, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, .1) 100%);
 }
-.iphone__round {
-  background: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .06));
-  border-color: rgba(255, 255, 255, .3); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4);
-}
-.iphone__time { top: 66px; }
 
 /* ── Мобильный таб-бар: плавающая стеклянная полоса внизу, как в iOS ── */
 .tabbar { display: none; }
 @media (max-width: 720px) {
   .tabbar {
     position: fixed; z-index: 55; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 6px; border-radius: 28px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .03)), rgba(24, 24, 30, .5);
-    border: 1px solid rgba(255, 255, 255, .12);
-    backdrop-filter: blur(24px) saturate(190%); -webkit-backdrop-filter: blur(24px) saturate(190%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 18px 40px -16px rgba(0, 0, 0, .85);
-  }
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 6px; border-radius: 28px; }
   .tabbar a {
     display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 0 6px; border-radius: 22px;
     font-size: 10.5px; font-weight: 600; color: var(--muted);
-    transition: color .25s, background-color .3s var(--ease), transform .3s var(--spring);
-  }
+    transition: color .25s, background-color .3s var(--ease), transform .3s var(--spring); }
   .tabbar a .ico { width: 21px; height: 21px; }
   .tabbar a.is-active { color: var(--text); background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
   .tabbar a:active { transform: scale(.92); }
@@ -747,8 +624,6 @@ a.strip__item:hover { background: rgba(255, 255, 255, .05); }
 .now__listen { display: inline-flex; margin-top: 18px; align-self: flex-start; }
 .now__player {
   margin-top: 18px; padding: 8px 10px; border-radius: 16px;
-  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
 }
 .now__player + .now__last, .now__player[hidden] + .now__last { margin-top: 16px; }
 .now__player[hidden] + .now__last { margin-top: 22px; }
@@ -758,18 +633,12 @@ a.strip__item:hover { background: rgba(255, 255, 255, .05); }
    Liquid Glass v2 — прозрачное стекло, как виджеты на экране блокировки iOS
    Под стеклом — обои с линзой за курсором (assets/js/site.js, «Фон»).
    ══════════════════════════════════════════════════════════════════════ */
-.ambient { display: none; }
 .fx {
   display: block; position: fixed; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none;
-  background: linear-gradient(rgba(8, 8, 12, .5), rgba(8, 8, 12, .5)), #0a0a10 url('/assets/media/bg-home.webp') center / cover no-repeat;
 }
 
 .panel, .card, .strip, .tabs, .spec, .nav.is-scrolled .nav__inner, .tabbar, .btn--ghost {
-  background: rgba(10, 10, 18, .14);
   border: 0;
-  -webkit-backdrop-filter: blur(6px) saturate(1.3);
-  backdrop-filter: blur(3px) saturate(1.3);
-  backdrop-filter: url(#lg-glass) saturate(1.3) brightness(1.08);
   box-shadow:
     inset 0 0 2px 1px rgba(255, 255, 255, .32),
     inset 0 0 10px 4px rgba(255, 255, 255, .1),
@@ -779,27 +648,21 @@ a.strip__item:hover { background: rgba(255, 255, 255, .05); }
     0 22px 50px -26px rgba(0, 0, 0, .65);
 }
 .card--link:hover {
-  background: rgba(255, 255, 255, .05);
   box-shadow:
     inset 0 0 2px 1px rgba(255, 255, 255, .45),
     inset 0 0 14px 5px rgba(255, 255, 255, .14),
     inset 0 6px 56px rgba(17, 17, 26, .06),
     0 30px 60px -28px rgba(0, 0, 0, .75);
 }
-.btn--ghost:hover { background: rgba(255, 255, 255, .08); }
-.phone-stage { background: rgba(10, 10, 18, .14); }
-.now { background: rgba(10, 10, 18, .2); }
-.now::after { background: linear-gradient(180deg, rgba(10, 10, 16, .05) 0%, rgba(10, 10, 16, .55) 85%); }
-.tile, .top__row, .now__last, .now__player { background: rgba(255, 255, 255, .055); border: 0; box-shadow: inset 0 0 1px 1px rgba(255, 255, 255, .1); }
+.tile, .top__row, .now__last, .now__player { background: rgba(255, 255, 255, .055); border: 0; }
 .top__row:hover, .now__last:hover { background: rgba(255, 255, 255, .1); }
-.badge-ico { background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 1px 1px rgba(255, 255, 255, .18); }
-body { text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
+.badge-ico { background: rgba(255, 255, 255, .1); }
 
 /* мини-обложка в полоске: стеклянный фон иконки не должен сбивать масштаб картинки */
 .strip__item .strip__cover { background-size: cover; background-position: center; background-repeat: no-repeat; }
 
 /* ── Часы: цифры целиком + эффект глубины (нижняя лента обоев поверх цифр) ── */
-.iphone__time { top: 52px; line-height: 1.22; padding-top: 2px; font-size: 100px; transform: scaleY(1.95); }
+.iphone__time { top: 52px; line-height: 1.22; padding-top: 2px; font-size: 100px; }
 .iphone__fg {
   position: absolute; inset: 0; pointer-events: none;
   background: url('/assets/media/wallpaper-lock.webp') center / cover no-repeat;
@@ -809,7 +672,6 @@ body { text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
   filter: drop-shadow(0 -2px 6px rgba(0, 0, 0, .35));
 }
 .now[data-state="playing"] .now__status .label { color: rgba(255, 255, 255, .88); }
-.iphone__time { background: linear-gradient(180deg, rgba(214, 216, 246, .82) 0%, rgba(176, 179, 228, .66) 55%, rgba(140, 143, 196, .55) 100%); -webkit-background-clip: text; background-clip: text; }
 
 
 /* ══ Производительность ══════════════════════════════════════════════════
@@ -820,18 +682,9 @@ body { text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
 .fx { will-change: transform; transform: translateZ(0); }
 .panel, .card, .strip, .tabs, .spec, .btn--ghost, .phone-stage, .now {
   -webkit-backdrop-filter: none; backdrop-filter: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .015)), rgba(12, 12, 20, .42);
 }
-.now { background: rgba(12, 12, 20, .5); }
 .card--link:hover { background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .025)), rgba(14, 14, 22, .42); }
-.nav.is-scrolled .nav__inner, .tabbar {
-  -webkit-backdrop-filter: blur(14px) saturate(1.5);
-  backdrop-filter: blur(4px) saturate(1.4);
-  backdrop-filter: url(#lg-glass) blur(2px) saturate(1.4) brightness(1.06);
-  background: rgba(14, 14, 22, .35);
-}
 body { text-shadow: none; }
-.iphone__np { -webkit-backdrop-filter: blur(10px) saturate(1.8); backdrop-filter: blur(10px) saturate(1.8); }
 .iphone__round { -webkit-backdrop-filter: none; backdrop-filter: none; }
 
 /* ══ Мобильная версия (≤ 720 px) — собрана отдельно, а не «сжатый десктоп» ══════════════════════ */
@@ -839,7 +692,7 @@ body { text-shadow: none; }
   .wrap { width: calc(100% - 28px); }
   .nav__inner { width: calc(100% - 20px); padding: 0 6px 0 16px; }
   .nav { padding-top: 8px; }
-  .nav .btn--sm { height: 34px; padding: 0 12px; font-size: 13px; }
+  .nav .btn--sm { padding: 0 12px; font-size: 13px; }
 
   /* hero — как профиль в iOS: всё по центру */
   .hero { padding-top: calc(var(--nav-h) + 32px); padding-bottom: 8px; }
@@ -862,7 +715,7 @@ body { text-shadow: none; }
 
   /* табы проектов: прокрутка вбок с затуханием у края */
   .tabs { width: 100%; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
-  .tab { height: 36px; padding: 0 14px; flex: none; }
+  .tab { padding: 0 14px; flex: none; }
 
   /* «Сейчас играет» — как плеер Apple Music на телефоне: обложка крупно, текст по центру */
   .now__body { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 18px; }
@@ -895,7 +748,6 @@ body { text-shadow: none; }
   .donate__actions .btn { width: 100%; }
 
   .footer { padding: 40px 0 24px; }
-  .footer__inner { justify-content: center; gap: 12px; }
 }
 
 /* ══ Фон и стекло-линза ══════════════════════════════════════════════════
@@ -933,7 +785,6 @@ body { text-shadow: none; }
   background: linear-gradient(180deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .015)), rgba(16, 16, 17, .42);
 }
 .now::after { background: linear-gradient(180deg, rgba(16, 16, 17, 0) 0%, rgba(16, 16, 17, .5) 85%); }
-.nav.is-scrolled .nav__inner, .tabbar { background: rgba(18, 18, 19, .35); }
 
 /* цифры часов — прозрачное стекло: обои видны насквозь, светлая кромка и блик сверху, как в iOS 26 */
 .iphone__time {
@@ -979,3 +830,44 @@ body { text-shadow: none; }
 
 /* акцент — светлый серый, как всё остальное: эквалайзер «играет», подписи, ползунки */
 :root { --accent: #ececec; }
+
+/* ══ Правки дизайна ══════════════════════════════════════════════════════ */
+/* вторичный текст читается на любом участке фона */
+:root { --muted: rgba(235, 235, 245, .74); --faint: rgba(235, 235, 245, .6); }
+
+/* часы на экране айфона: ширину подгоняет site.js (--fit), цифры не выходят за экран */
+.iphone__time { transform: scale(var(--fit, .86), 1.95); }
+
+/* шапка и таб-бар: настоящее размытие — текст страницы под ними не спорит с пунктами меню */
+.nav.is-scrolled .nav__inner, .tabbar {
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: url(#lg-glass) blur(14px) saturate(1.4) brightness(1.06);
+  background: rgba(18, 18, 19, .55);
+}
+
+/* стекло в стекле: у вложенных плашек кромки нет, только заливка — кромка остаётся у самой панели */
+.tile, .top__row, .now__last, .now__player { box-shadow: none; }
+.badge-ico { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+
+/* аватар: кромка и тень как у остального стекла */
+.hero__avatar { position: relative; border: 0; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .8); }
+.hero__avatar::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), inset 0 1px 0 rgba(255, 255, 255, .3);
+}
+
+/* тишина: последний трек стоит на месте текущего, фон-обложка приглушён; совсем без треков — без пустой обложки */
+.now[data-state="last"] .now__backdrop { opacity: .35; }
+.now[data-state="idle"] .now__cover { display: none; }
+.now[data-state="idle"] .now__body { grid-template-columns: 1fr; }
+
+/* счётчик онлайна: на телефоне вместо слов — значок человека */
+.nav__online-ico { display: none; width: 13px; height: 13px; }
+
+@media (max-width: 720px) {
+  .nav__online-ico { display: block; }
+  /* всё, на что нажимают пальцем, — не меньше 44 px */
+  .btn--sm, .nav .btn--sm, .tab { height: 44px; }
+  .icon-btn { width: 44px; height: 44px; }
+}
