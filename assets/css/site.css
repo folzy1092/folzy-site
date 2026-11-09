@@ -810,3 +810,119 @@ body { text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
 }
 .now[data-state="playing"] .now__status .label { color: rgba(255, 255, 255, .88); }
 .iphone__time { background: linear-gradient(180deg, rgba(214, 216, 246, .82) 0%, rgba(176, 179, 228, .66) 55%, rgba(140, 143, 196, .55) 100%); -webkit-background-clip: text; background-clip: text; }
+
+
+/* ══ Производительность ══════════════════════════════════════════════════
+   Живой backdrop-filter браузер пересчитывает на каждом кадре прокрутки — на двух десятках карточек
+   это лаги. Поэтому карточки — «запечённое» стекло: прозрачный фон, кромки и блики (рисуются один раз),
+   без фильтра. Живое преломление — только у маленьких плавающих шапки и таб-бара. Фон — картинка
+   на собственном GPU-слое, без JavaScript. */
+.fx { will-change: transform; transform: translateZ(0); }
+.panel, .card, .strip, .tabs, .spec, .btn--ghost, .phone-stage, .now {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .015)), rgba(12, 12, 20, .42);
+}
+.now { background: rgba(12, 12, 20, .5); }
+.card--link:hover { background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .025)), rgba(14, 14, 22, .42); }
+.nav.is-scrolled .nav__inner, .tabbar {
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(4px) saturate(1.4);
+  backdrop-filter: url(#lg-glass) blur(2px) saturate(1.4) brightness(1.06);
+  background: rgba(14, 14, 22, .35);
+}
+body { text-shadow: none; }
+.iphone__np { -webkit-backdrop-filter: blur(10px) saturate(1.8); backdrop-filter: blur(10px) saturate(1.8); }
+.iphone__round { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ══ Мобильная версия (≤ 720 px) — собрана отдельно, а не «сжатый десктоп» ══════════════════════ */
+@media (max-width: 720px) {
+  .wrap { width: calc(100% - 28px); }
+  .nav__inner { width: calc(100% - 20px); padding: 0 6px 0 16px; }
+  .nav { padding-top: 8px; }
+  .nav .btn--sm { height: 34px; padding: 0 12px; font-size: 13px; }
+
+  /* hero — как профиль в iOS: всё по центру */
+  .hero { padding-top: calc(var(--nav-h) + 32px); padding-bottom: 8px; }
+  .hero__grid { justify-items: center; text-align: center; gap: 22px; }
+  .hero__avatar { width: 116px; border-radius: 34px; order: -1; }
+  .hero__name { font-size: 68px; justify-content: center; margin-left: 0; }
+  .hero__lead { margin: 16px auto 0; font-size: 15.5px; max-width: 34ch; }
+  .hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; width: 100%; }
+  .hero__actions .btn { height: 48px; padding: 0 12px; font-size: 14.5px; }
+  .strip { margin-top: 28px; border-radius: 22px; }
+  .strip__item { padding: 13px 14px; }
+
+  .section { padding-top: 56px; }
+  .section__title { font-size: 36px; margin-bottom: 18px; gap: 10px; }
+  .panel { padding: 16px; border-radius: 24px; }
+  .card { padding: 18px; border-radius: 24px; }
+  .card h3 { font-size: 17px; }
+  .card p { font-size: 14px; }
+  .card__head { margin-bottom: 16px; }
+
+  /* табы проектов: прокрутка вбок с затуханием у края */
+  .tabs { width: 100%; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .tab { height: 36px; padding: 0 14px; flex: none; }
+
+  /* «Сейчас играет» — как плеер Apple Music на телефоне: обложка крупно, текст по центру */
+  .now__body { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 18px; }
+  .now__cover { width: min(250px, 76%); border-radius: 18px; }
+  .now__meta { width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .now__title { font-size: 22px; }
+  .now__artist { font-size: 15px; }
+  .now__listen { align-self: center; }
+  .tiles { gap: 6px; }
+  .tile { padding: 12px; border-radius: 16px; }
+  .tile__value { font-size: 21px; }
+  .top__row { grid-template-columns: 16px 40px minmax(0, 1fr) auto; gap: 10px; padding: 7px 12px 7px 10px; }
+  .top__cover { width: 40px; height: 40px; }
+
+  .fact { padding: 18px; }
+  .fact dl > div { font-size: 14px; }
+
+  .phone-stage { padding: 30px 12px 20px; }
+  .iphone { width: 222px; }
+  .specs { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .spec { padding: 12px 14px; font-size: 13.5px; border-radius: 16px; }
+  .phone-intro h3 { font-size: 22px; }
+
+  .contacts { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .contact { min-height: 0; padding: 16px; }
+  .contact h3 { font-size: 16px; }
+  .contact .card__head { margin-bottom: 14px; }
+  .donate { flex-direction: column; align-items: stretch; gap: 14px; }
+  .donate__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .donate__actions .btn { width: 100%; }
+
+  .footer { padding: 40px 0 24px; }
+  .footer__inner { justify-content: center; gap: 12px; }
+}
+
+/* ══ Фон и стекло-линза ══════════════════════════════════════════════════
+   Фон — свой статичный: графитовые шёлковые ленты (assets/media/bg-graphite.webp), без анимации и JS.
+   Стекло — одно преломление, как у линзы-шейдера: картинка под стеклом стягивается к центру, сильнее
+   к краю (карта lg-map.png, squircle). У маленьких кнопок смещение слабее (#lg-btn), у шапки и таб-бара —
+   сильнее (#lg-glass). Карточки — без живого фильтра, это и убирает лаги прокрутки. */
+.fx { background: #0d0d10 url('/assets/media/bg-graphite.webp') center / cover no-repeat; }
+.btn--ghost, .icon-btn, .tabs, .nav__online, .now__listen {
+  -webkit-backdrop-filter: blur(8px) saturate(1.4);
+  backdrop-filter: blur(2px) saturate(1.4);
+  backdrop-filter: url(#lg-btn) saturate(1.4) brightness(1.1);
+  background: rgba(255, 255, 255, .04);
+  border: 0;
+  box-shadow:
+    inset 1.5px -1.5px 1px -1px rgba(255, 255, 255, .55),
+    inset -1.5px 1.5px 1px -1px rgba(255, 255, 255, .55),
+    inset 0 0 1px 1px rgba(255, 255, 255, .16),
+    inset 0 0 12px rgba(255, 255, 255, .05),
+    0 6px 16px -8px rgba(0, 0, 0, .6);
+}
+.btn--ghost:hover, .icon-btn:hover { background: rgba(255, 255, 255, .09); }
+.nav.is-scrolled .nav__inner, .tabbar {
+  box-shadow:
+    inset 2px -2px 1px -1px rgba(255, 255, 255, .5),
+    inset -2px 2px 1px -1px rgba(255, 255, 255, .5),
+    inset 0 0 1px 1px rgba(255, 255, 255, .14),
+    inset 0 0 18px rgba(255, 255, 255, .05),
+    0 16px 40px -18px rgba(0, 0, 0, .85);
+}
