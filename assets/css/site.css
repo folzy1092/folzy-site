@@ -976,3 +976,6 @@ body { text-shadow: none; }
   .footer { padding-top: 15px; padding-bottom: 20px; }
   .footer__inner { justify-content: space-between; gap: 12px; padding-top: 18px; }
 }
+
+/* акцент — светлый серый, как всё остальное: эквалайзер «играет», подписи, ползунки */
+:root { --accent: #ececec; }

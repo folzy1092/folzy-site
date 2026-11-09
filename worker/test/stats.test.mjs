@@ -281,3 +281,26 @@ test('онлайн: вкладки считаются, ушедшие и мус�
   const res = await worker.fetch(new Request('https://w/presence'), env, {});
   assert.equal((await res.json()).online, 1);
 });
+
+test('Dotify оборвал трек посреди — сайт доигрывает его по часам до конца', async () => {
+  const env = { LASTFM_API_KEY: 'k', LASTFM_USER: 'hold-1', PUSH_TOKEN: 'secret', NOW: fakeNow() };
+  const now = Date.now() / 1000;
+  await push(env, { playing: true, track: { title: 'Long', artist: 'A', duration: 200, position: 50, at: now - 10 } });
+  await push(env, { playing: false });
+  let body = await (await worker.fetch(new Request('https://w/now'), env, {})).json();
+  assert.equal(body.playing, true);
+  assert.equal(body.track.title, 'Long');
+  assert.ok(body.track.position >= 59 && body.track.position <= 62, body.track.position);
+  // повторное «не играет» не теряет удерживаемый трек
+  await push(env, { playing: false });
+  body = await (await worker.fetch(new Request('https://w/now'), env, {})).json();
+  assert.equal(body.track.title, 'Long');
+});
+
+test('удерживаемый трек доиграл — тишина; новый трек заменяет сразу', () => {
+  const held = { title: 'Old', artist: 'A', duration: 100, position: 90, at: 1000 };
+  assert.equal(fromPush({ track: null, held, received: 1000 }, 1005).playing, true);
+  assert.equal(fromPush({ track: null, held, received: 1000 }, 1011).playing, false);
+  const fresh = { title: 'New', artist: 'B', duration: 100, position: 1, at: 1005 };
+  assert.equal(fromPush({ track: fresh, held, received: 1005 }, 1006).track.title, 'New');
+});

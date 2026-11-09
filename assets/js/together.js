@@ -37,7 +37,7 @@
   };
   const playerSrc = (url) => `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true`
     + '&visual=false&show_artwork=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=false'
-    + '&hide_related=true&buying=false&sharing=false&download=false&color=%23ff5500';
+    + '&hide_related=true&buying=false&sharing=false&download=false&color=%23d0d0d0';
   const seekNow = () => { if (widget) widget.seekTo(Math.max(0, position() * 1000)); };
 
   const render = () => {

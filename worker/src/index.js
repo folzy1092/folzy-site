@@ -156,6 +156,13 @@ async function receivePush(request, env) {
     last: last ? { ...last, ts: Math.round(number(body.last.ts)) } : null,
     received: Math.floor(Date.now() / 1000),
   };
+  if (!track) {
+    // Dotify часто обрывает трек посреди — как selfbot (hold_until_end), держим последний трек,
+    // пока он по часам не доиграет. Новый трек от бота сразу заменяет удерживаемый.
+    const prev = await pushed(env).catch(() => null);
+    const held = prev && (prev.track || prev.held);
+    if (held && held.duration > 0 && held.at > 0) state.held = held;
+  }
   await stub.fetch('https://now/', { method: 'PUT', body: JSON.stringify(state) });
   await rememberCovers(env, [track, state.last]);
   if (track && track.duration > 0) {
@@ -301,7 +308,12 @@ async function pushed(env) {
 
 // позицию переводим на время ответа: браузер дальше считает сам от server_time, без часов бота
 export function fromPush(state, nowTs) {
-  const track = state.track ? { ...state.track } : null;
+  let base = state.track;
+  if (!base && state.held) {
+    const pos = state.held.position + Math.max(0, nowTs - state.held.at);
+    if (pos < state.held.duration) base = state.held;       // ещё не доиграл — показываем как играющий
+  }
+  const track = base ? { ...base } : null;
   if (track) {
     const position = track.position + Math.max(0, nowTs - (track.at || nowTs));
     track.position = track.duration ? Math.min(position, track.duration) : position;
