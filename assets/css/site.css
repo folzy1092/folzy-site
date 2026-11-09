@@ -963,3 +963,16 @@ body { text-shadow: none; }
     inset 0 0 14px rgba(255, 255, 255, .06),
     0 10px 24px -14px rgba(0, 0, 0, .55);
 }
+
+/* ── Футер: копирайт слева, «Наверх» справа, на одной линии ── */
+.footer__inner { align-items: center; justify-content: space-between; }
+.footer__copy { font-size: 13px; color: var(--faint); }
+.footer__top .ico { width: 15px; height: 15px; }
+.footer__top:hover .ico { transform: translateY(-2px); }
+
+@media (max-width: 720px) {
+  /* донаты — в 15 px над линией футера; отступ «Связь» → блоки остаётся прежним */
+  #contact { padding-bottom: 0; }
+  .footer { padding-top: 15px; padding-bottom: 20px; }
+  .footer__inner { justify-content: space-between; gap: 12px; padding-top: 18px; }
+}
