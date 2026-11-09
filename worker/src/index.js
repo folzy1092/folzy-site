@@ -11,6 +11,7 @@
 //   GET  /       → { now, stats }
 //   GET  /now    → что играет сейчас; у трека от бота есть duration и position (секунда на server_time)
 //   GET  /stats  → сегодня / неделя / месяц / в среднем за день + топ треков месяца (кэш 10 мин)
+//   POST /presence → { id[, leave] } от вкладки сайта; отвечает { online } — сколько человек на сайте
 //   POST /now    → от selfbot: { playing, track: { title, artist, cover, link, duration, position, at } }
 //
 // Длительности треков Last.fm отдаёт только через track.getInfo, поэтому они копятся в KV (CACHE):
@@ -33,6 +34,9 @@ const SC_MISS_TTL = 60 * 60 * 24 * 7;   // в SoundCloud не нашли — п�
 const SC_ID_TTL = 60 * 60 * 24;         // client_id SoundCloud перечитываем раз в сутки
 const SC_SCRIPTS = 4;                   // client_id лежит в последних бандлах soundcloud.com
 
+const PRESENCE_TTL = 75 * 1000;  // вкладка отмечается раз в 30 с; две пропущенные отметки — ушла
+const PRESENCE_MAX = 5000;
+
 const memory = new Map();       // запасной кэш, если KV не привязан
 
 // Хранилище «что играет» от бота: один объект на весь сайт, читается и пишется сразу.
@@ -40,9 +44,11 @@ export class NowState {
   constructor(state) {
     this.state = state;
     this.value = undefined;
+    this.seen = new Map();      // онлайн: id вкладки → когда отметилась (только в памяти, рестарт = ноль)
   }
 
   async fetch(request) {
+    if (new URL(request.url).pathname === '/presence') return this.presence(request);
     if (request.method === 'PUT') {
       this.value = await request.text();
       await this.state.storage.put('now', this.value);
@@ -51,6 +57,19 @@ export class NowState {
     if (this.value === undefined) this.value = (await this.state.storage.get('now')) || null;
     return new Response(this.value || 'null', { headers: { 'Content-Type': 'application/json' } });
   }
+
+  async presence(request) {
+    const now = Date.now();
+    if (request.method === 'POST') {
+      const { id, leave } = await request.json().catch(() => ({}));
+      if (typeof id === 'string' && /^[a-z0-9]{8,32}$/.test(id)) {
+        if (leave) this.seen.delete(id);
+        else if (this.seen.has(id) || this.seen.size < PRESENCE_MAX) this.seen.set(id, now);
+      }
+    }
+    for (const [id, at] of this.seen) if (now - at > PRESENCE_TTL) this.seen.delete(id);
+    return new Response(JSON.stringify({ online: this.seen.size }), { headers: { 'Content-Type': 'application/json' } });
+  }
 }
 
 export default {
@@ -58,6 +77,13 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors() });
     const path = new URL(request.url).pathname.replace(/\/+$/, '') || '/';
     if (request.method === 'POST' && path === '/now') return receivePush(request, env);
+    if (path === '/presence' && (request.method === 'POST' || request.method === 'GET')) {
+      // сколько человек сейчас на сайте: вкладка шлёт {id} раз в 30 с, при уходе — {id, leave: true}
+      const stub = nowStub(env);
+      if (!stub) return json({ online: 0 });
+      const res = await stub.fetch('https://now/presence', { method: request.method, body: request.method === 'POST' ? await request.text() : undefined });
+      return json(await res.json(), 200, 0);
+    }
     if (request.method !== 'GET') return json({ error: 'method not allowed' }, 405);
     if (!env.LASTFM_API_KEY || !env.LASTFM_USER) {
       return json({ error: 'LASTFM_API_KEY или LASTFM_USER не заданы' }, 500);
@@ -533,7 +559,7 @@ async function cached(env, key, ttl, build) {
 function cors() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   };
 }
 

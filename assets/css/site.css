@@ -1,32 +1,34 @@
 /* folzy.ru
-   Палитра — от обоев Celosia с айфона владельца: почти чёрный с индиго, лавандовые ленты.
-   Те же обои лежат фоном страницы, а свет за курсором проявляет ленты: сайт и телефон — одна вещь.
-   Акцент один — оранжевый SoundCloud, только как знак «играет сейчас» (эквалайзер, подпись).
-   Шрифты: Onest — гротеск с нормальной кириллицей; JetBrains Mono — для цифр и подписей,
-   перекличка с терминальными постами канала Folzy.bio(). */
+   Один спокойный серый мир: нейтральные поверхности, светлый текст, никаких цветных подсветок.
+   Живость — в форме и движении: углы карточек «дышат» при наведении и нажатии, клик даёт рябь,
+   фон — поле штрихов, как бороздки пластинки: у курсора они закручиваются, клик пускает звуковую волну.
+   Цвет один — оранжевый SoundCloud, только как знак «играет сейчас». Обои владельца — только на его айфоне.
+   Шрифты: Manrope — геометрический гротеск с кириллицей; JetBrains Mono — цифры и подписи (терминальный
+   стиль канала Folzy.bio()); Oswald — только узкие цифры часов на экране блокировки. */
 
 :root {
-  --bg: #09090f;
-  --surface: rgba(17, 17, 27, 0.8);
-  --surface-2: rgba(255, 255, 255, 0.04);
-  --surface-3: rgba(255, 255, 255, 0.08);
-  --line: rgba(190, 195, 255, 0.08);
-  --line-strong: rgba(190, 195, 255, 0.18);
-  --text: #eeeef6;
-  --muted: #a4a5b8;
-  --faint: #8b8ca0;
+  --bg: #121212;
+  --surface: #1b1b1b;
+  --surface-2: #232323;
+  --surface-3: #2d2d2d;
+  --surface-4: #363636;
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.13);
+  --text: #e9e9e9;
+  --muted: #ababab;
+  --faint: #8c8c8c;
   --accent: #ff5500;
-  --lilac: #9ea2f0;
 
   --r-xl: 26px;
   --r-lg: 18px;
   --r-md: 12px;
 
-  --font: 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --morph: cubic-bezier(0.22, 1.4, 0.36, 1);
   --nav-h: 64px;
 }
 
@@ -54,43 +56,28 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 .label { font-size: 12px; color: var(--faint); letter-spacing: 0.01em; }
 .ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
-/* ── Фон: обои + свет за курсором ─────────────────────────── */
-.backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--bg); overflow: hidden; }
-.backdrop__img, .backdrop__light {
-  position: absolute; inset: -2%;
-  background: url('/assets/media/bg-celosia.webp') center / cover no-repeat;
+/* ── Фон: поле штрихов (assets/js/site.js, «Фон») ─────────── */
+.fx { position: fixed; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
+
+/* ── Рябь от нажатия ───────────────────────────────────── */
+.has-ripple { position: relative; overflow: hidden; isolation: isolate; }
+.ripple {
+  position: absolute; z-index: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, .08) 45%, transparent 70%);
+  transform: scale(0); animation: ripple .65s var(--ease) forwards;
 }
-.backdrop__img {
-  opacity: .5;
-  mask-image: radial-gradient(130% 100% at 75% 10%, #000 20%, rgba(0, 0, 0, .35) 60%, transparent 100%);
-  -webkit-mask-image: radial-gradient(130% 100% at 75% 10%, #000 20%, rgba(0, 0, 0, .35) 60%, transparent 100%);
-}
-.backdrop__light {
-  --mx: 70vw; --my: 30vh;
-  opacity: 0; filter: brightness(2.1) saturate(1.35);
-  mask-image: radial-gradient(380px circle at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, .45) 45%, transparent 72%);
-  -webkit-mask-image: radial-gradient(380px circle at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, .45) 45%, transparent 72%);
-  transition: opacity .8s var(--ease);
-}
-.backdrop__light::after {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(420px circle at var(--mx) var(--my), rgba(140, 146, 255, .16), transparent 70%);
-}
-.backdrop__light.is-on { opacity: .85; }
-.backdrop::after {
-  content: ''; position: absolute; inset: 0;
-  background: radial-gradient(140% 90% at 50% 0%, transparent 40%, rgba(6, 6, 10, .75) 100%);
-}
+.btn--light .ripple { background: radial-gradient(circle, rgba(0, 0, 0, .18), transparent 70%); }
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
 
 /* ── Кнопки ─────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   border-radius: 999px; font-weight: 500; white-space: nowrap;
-  transition: background-color .25s var(--ease), color .25s var(--ease), transform .35s var(--spring), border-color .25s;
+  transition: background-color .25s var(--ease), color .25s var(--ease), transform .35s var(--spring), border-color .25s, border-radius .3s var(--morph);
 }
 .btn .ico { width: 16px; height: 16px; transition: transform .35s var(--spring); }
 .btn:hover .ico use[href="#i-arrow"], .btn:hover > .ico:last-child { transform: translate(2px, -2px); }
-.btn:active { transform: scale(0.97); }
+.btn:active { transform: scale(0.96); border-radius: 14px; }
 .btn--sm { height: 36px; padding: 0 14px; font-size: 14px; }
 .btn--lg { height: 52px; padding: 0 26px; font-size: 15px; }
 .btn--light { background: var(--text); color: #111; }
@@ -102,7 +89,9 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
   width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px;
   background: var(--surface-3); color: var(--muted); transition: color .2s, background-color .2s;
 }
-.icon-btn:hover { color: var(--text); background: #2d2d32; }
+.icon-btn:hover { color: var(--text); background: var(--surface-4); border-radius: 17px; }
+.icon-btn:active { transform: scale(.92); }
+.icon-btn { transition: color .2s, background-color .2s, border-radius .35s var(--morph), transform .2s var(--spring); }
 .icon-btn .ico { width: 16px; height: 16px; }
 .icon-btn.is-spinning .ico { animation: spin .8s var(--ease); }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -119,13 +108,20 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
   border-bottom: 1px solid transparent;
 }
 .nav.is-scrolled {
-  background: rgba(12, 12, 13, 0.82);
+  background: rgba(18, 18, 18, 0.84);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
   border-color: var(--line);
 }
 .nav__inner { height: 100%; width: min(1120px, 100% - 40px); margin-inline: auto; display: flex; align-items: center; gap: 24px; }
-.nav__brand { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; margin-right: auto; }
+.nav__brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
+.nav__online {
+  display: inline-flex; align-items: center; gap: 7px; margin-right: auto; padding: 5px 11px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted);
+}
+.nav__online i { width: 6px; height: 6px; border-radius: 50%; background: #34d399; }   /* живой счётчик — реальное состояние */
+.nav__online[hidden] + * { margin-left: auto; }
+.nav__online span { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 .nav__links { position: relative; display: flex; gap: 2px; }
 .nav__links a {
   position: relative; z-index: 1; padding: 7px 13px; border-radius: 999px;
@@ -164,7 +160,7 @@ h1, h2, h3 { line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 .hero__avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 .strip {
-  margin-top: 64px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: grid; grid-template-columns: repeat(3, 1fr);
+  margin-top: 64px; display: grid; grid-template-columns: repeat(3, 1fr);
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden;
 }
 .strip__item { display: flex; align-items: center; gap: 14px; padding: 16px 18px; min-width: 0; transition: background-color .25s; }
@@ -174,6 +170,10 @@ a.strip__item:hover { background: var(--surface-2); }
 .strip__body { display: flex; flex-direction: column; min-width: 0; }
 .strip__value { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .strip__item.is-live .badge-ico { color: var(--accent); }
+.strip__cover { background: var(--surface-3) center / cover no-repeat; transition: border-radius .4s var(--morph); }
+.strip__cover.has-cover .ico { opacity: 0; }
+.strip__cover.has-cover { box-shadow: 0 6px 14px -6px rgba(0, 0, 0, .8); }
+a.strip__item:hover .badge-ico { border-radius: 18px; }
 
 /* ── Секции ─────────────────────────────────────────────── */
 .section { padding: 88px 0 24px; }
@@ -194,7 +194,9 @@ a.strip__item:hover { background: var(--surface-2); }
   transition: color .35s var(--ease);
 }
 .tab .ico { width: 16px; height: 16px; }
-.tab:hover { color: var(--text); }
+.tab:hover { color: var(--text); background: var(--surface-3); }
+.tab.is-active:hover { background: none; }
+.tab { transition: color .35s var(--ease), background-color .25s; }
 .tab.is-active { color: #111; }
 .tabs__pill {
   position: absolute; top: 0; left: 0; border-radius: 999px; background: var(--text);
@@ -208,8 +210,12 @@ a.strip__item:hover { background: var(--surface-2); }
 .cards.is-entering .card:nth-child(4) { animation-delay: .15s; }
 @keyframes card-in { from { opacity: 0; transform: translateY(14px) scale(.98); } }
 
-.card { position: relative; display: flex; flex-direction: column; padding: 22px; min-height: 220px; transition: background-color .3s var(--ease), border-color .3s, transform .45s var(--spring); }
-.card--link:hover { background: var(--surface-2); border-color: var(--line-strong); transform: translateY(-3px); }
+.card { position: relative; display: flex; flex-direction: column; padding: 22px; min-height: 220px; border-radius: 20px;
+  transition: background-color .3s var(--ease), border-color .3s, transform .45s var(--spring), border-radius .4s var(--morph); }
+.card--link:hover { background: var(--surface-2); border-color: var(--line-strong); border-radius: 32px; }
+.card--link:active { transform: scale(.985); border-radius: 38px; transition-duration: .15s, .15s, .2s, .2s; }
+.card .badge-ico, .fact .badge-ico { transition: border-radius .4s var(--morph), background-color .3s, color .3s; }
+.card--link:hover .badge-ico { border-radius: 20px; background: var(--text); color: var(--bg); }
 .card__head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 26px; }
 .card__go { color: var(--faint); transition: transform .4s var(--spring), color .25s; }
 .card--link:hover .card__go { color: var(--text); transform: translate(3px, -3px); }
@@ -274,7 +280,12 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   border-radius: 14px; background: rgba(255, 255, 255, .05); transition: background-color .25s;
 }
 .now__body + .now__last { margin-top: 22px; }
-.now__last:hover { background: rgba(255, 255, 255, .09); }
+.now__last:hover { background: rgba(255, 255, 255, .09); border-radius: 22px; }
+.now__last { transition: background-color .25s, border-radius .4s var(--morph); }
+.now__listen { margin-top: 18px; }
+.now__listen.is-on { background: var(--text); color: var(--bg); border-color: transparent; }
+.now__player { margin-top: 16px; border-radius: 10px; overflow: hidden; }
+.now__player iframe { display: block; width: 100%; height: 20px; border: 0; }
 .now__last-cover { width: 38px; height: 38px; flex: none; border-radius: 9px; background: var(--surface-3) center / cover; }
 .now__last-text { display: flex; flex-direction: column; min-width: 0; }
 .now__last-text b, .now__last-text i { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; }
@@ -298,7 +309,9 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   position: relative; display: grid; grid-template-columns: 20px 46px minmax(0, 1fr) auto; align-items: center; gap: 12px;
   padding: 8px 16px 8px 12px; border-radius: 14px; background: var(--surface-2); transition: background-color .25s;
 }
-.top__row:hover { background: var(--surface-3); }
+.top__row:hover { background: var(--surface-3); border-radius: 22px; }
+.top__row { transition: background-color .25s, border-radius .4s var(--morph); }
+.top__row:active { transform: scale(.99); }
 .top__n { font-family: var(--mono); font-size: 12px; color: var(--faint); }
 .top__cover {
   width: 46px; height: 46px; border-radius: 10px; background: var(--surface-3) center / cover; display: grid; place-items: center; color: var(--faint);
@@ -330,7 +343,7 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
   padding: 44px 22px 26px; perspective: 1600px; overflow: hidden;
   background:
-    radial-gradient(70% 55% at 50% 42%, rgba(120, 126, 230, .16), transparent 70%),
+    radial-gradient(70% 55% at 50% 42%, rgba(255, 255, 255, .05), transparent 70%),
     var(--surface);
 }
 .phone-stage::after {        /* тень на «полу» под телефоном */
@@ -369,55 +382,84 @@ a.now__cover[href]:hover { transform: scale(1.035) rotate(-.6deg); }
   position: relative; height: 100%; border-radius: 36.5px; overflow: hidden; border: 6px solid #040406;
   background: #0b0b14 url('/assets/media/wallpaper-lock.webp') center / cover no-repeat;
   display: flex; flex-direction: column; align-items: center; color: #fff;
-  font-variant-numeric: tabular-nums;
+  font-family: -apple-system, 'SF Pro Text', var(--font); font-variant-numeric: tabular-nums;
 }
 .iphone__status {
-  position: absolute; top: 10px; left: 20px; right: 16px; display: flex; justify-content: space-between; align-items: center;
-  font-size: 10.5px; font-weight: 600; letter-spacing: .01em;
+  position: absolute; top: 11px; left: 18px; right: 14px; display: flex; justify-content: space-between; align-items: center;
+  font-size: 10.5px; font-weight: 600;
 }
-.iphone__status-icons { display: flex; gap: 4px; align-items: center; }
-.iphone__status-icons .ico { width: 12px; height: 12px; }
-.iphone__battery { position: relative; width: 20px; height: 10px; padding: 1.2px; border-radius: 3px; border: 1px solid rgba(255, 255, 255, .45); }
-.iphone__battery i { display: block; width: 78%; height: 100%; border-radius: 1.5px; background: #fff; }
-.iphone__battery::after { content: ''; position: absolute; right: -3.5px; top: 2.5px; width: 2px; height: 3.5px; border-radius: 0 1px 1px 0; background: rgba(255, 255, 255, .45); }
+.iphone__carrier { display: inline-flex; align-items: center; gap: 3px; }
+.iphone__carrier .ico { width: 10px; height: 10px; }
+.iphone__status-icons { display: flex; gap: 3.5px; align-items: center; }
+.iphone__status-icons .ico { width: 11.5px; height: 11.5px; }
+.iphone__battery {
+  position: relative; min-width: 20px; height: 10.5px; padding: 0 3px; border-radius: 3.5px; margin-right: 2px;
+  background: rgba(255, 255, 255, .5); color: #1d1d24; font-size: 8px; font-weight: 800; line-height: 10.5px; text-align: center;
+}
+.iphone__battery::after { content: ''; position: absolute; right: -2.5px; top: 3.5px; width: 1.5px; height: 3.5px; border-radius: 0 1px 1px 0; background: rgba(255, 255, 255, .5); }
 .iphone__island { position: absolute; top: 8px; left: 50%; width: 31%; height: 22px; transform: translateX(-50%); border-radius: 999px; background: #000; }
-.iphone__lock { margin-top: 42px; width: 12px; height: 12px; opacity: .9; }
-.iphone__date { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; color: rgba(236, 237, 255, .82); }
+.iphone__date { position: absolute; top: 38px; font-size: 13.5px; font-weight: 600; color: rgba(240, 240, 250, .92); letter-spacing: -.01em; }
 .iphone__date::first-letter { text-transform: uppercase; }
+/* часы как в iOS 26: узкие высокие цифры из «стекла» во всю ширину */
 .iphone__time {
-  margin-top: 1px; font-size: 68px; font-weight: 600; letter-spacing: -0.035em; line-height: 1;
-  color: rgba(232, 234, 255, .93); text-shadow: 0 4px 24px rgba(10, 10, 30, .35);
+  position: absolute; top: 64px; left: 0; right: 0; text-align: center;
+  font-family: 'Oswald', 'Bahnschrift Condensed', 'Arial Narrow', sans-serif; font-weight: 500;
+  font-size: 92px; line-height: 1; letter-spacing: -1px;
+  transform: scaleY(1.75); transform-origin: top center;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(196, 199, 235, .62) 0%, rgba(150, 154, 205, .48) 55%, rgba(120, 122, 170, .38) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 .6px 0 rgba(255, 255, 255, .45)) drop-shadow(0 6px 10px rgba(5, 5, 20, .35));
 }
 
 .iphone__np {
-  position: absolute; left: 9px; right: 9px; bottom: 70px; padding: 11px 12px 9px; border-radius: 20px;
-  background: rgba(28, 29, 48, .5); border: .5px solid rgba(255, 255, 255, .14);
-  backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  position: absolute; left: 7px; right: 7px; top: 54.5%; padding: 10px 11px 9px; border-radius: 19px;
+  background: rgba(40, 42, 64, .38); border: .5px solid rgba(255, 255, 255, .2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+  backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
 }
-.iphone__np-row { display: flex; gap: 9px; align-items: center; }
-.iphone__np-cover { width: 36px; height: 36px; flex: none; border-radius: 7px; background: rgba(255, 255, 255, .14) center / cover; }
-.iphone__np-text { display: flex; flex-direction: column; min-width: 0; }
-.iphone__np-text b, .iphone__np-text i { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; }
-.iphone__np-text b { font-size: 11.5px; font-weight: 600; }
-.iphone__np-text i { font-size: 10.5px; color: rgba(255, 255, 255, .62); }
-.iphone__np-progress { margin-top: 9px; }
-.iphone__np-bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .22); overflow: hidden; }
-.iphone__np-bar i { display: block; height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); transition: transform .5s linear; }
-.iphone__np-times { display: flex; justify-content: space-between; margin-top: 4px; font-size: 8.5px; color: rgba(255, 255, 255, .55); }
-.iphone__np-controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 4px; }
+.iphone__np-row { display: flex; gap: 8px; align-items: center; }
+.iphone__np-cover { width: 33px; height: 33px; flex: none; border-radius: 6px; background: rgba(255, 255, 255, .14) center / cover; }
+.iphone__np-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.iphone__np-text b, .iphone__np-text i { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; line-height: 1.25; }
+.iphone__np-text b { font-size: 11px; font-weight: 600; }
+.iphone__np-text i { font-size: 10.5px; color: rgba(255, 255, 255, .58); }
+.iphone__np-wave { width: 15px; height: 15px; color: rgba(255, 255, 255, .45); flex: none; }
+.iphone__np-progress { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 8px; color: rgba(255, 255, 255, .6); }
+.iphone__np-bar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .2); overflow: hidden; }
+.iphone__np-bar i { display: block; height: 100%; background: rgba(255, 255, 255, .78); transform-origin: left; transform: scaleX(0); transition: transform .5s linear; }
+.iphone__np-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; padding: 0 2px; }
 .iphone__np-controls .ico { width: 15px; height: 15px; }
-.iphone__np-controls .ico--big { width: 20px; height: 20px; }
+.iphone__np-controls .ico--big { width: 19px; height: 19px; }
+.iphone__np-controls .ico--dim { width: 12px; height: 12px; color: rgba(255, 255, 255, .5); }
 
-.iphone__dock { position: absolute; left: 20px; right: 20px; bottom: 22px; display: flex; justify-content: space-between; }
+.iphone__widgets { position: absolute; top: 79.5%; left: 0; right: 0; display: flex; justify-content: center; gap: 18px; }
+.iphone__w { position: relative; width: 34px; height: 34px; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+.iphone__ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(90deg); }
+.iphone__ring circle { fill: none; stroke-width: 3.2; stroke-linecap: round; }
+.iphone__ring-track { stroke: rgba(255, 255, 255, .28); }
+.iphone__ring-arc { stroke-dasharray: 75.4 100.5; transform: rotate(45deg); transform-origin: 20px 20px; }
+.iphone__ring-fill { stroke: rgba(255, 255, 255, .9); stroke-dasharray: 80 100.5; transform: rotate(-90deg); transform-origin: 20px 20px; }
+.iphone__ring-dot { fill: #fff; stroke: none !important; transform-origin: 20px 20px; }
+.iphone__w b { position: relative; font-weight: 600; font-size: 13px; }
+.iphone__w small { position: absolute; bottom: -1px; left: 6px; right: 6px; display: flex; justify-content: space-between; font-size: 6.5px; color: rgba(255, 255, 255, .7); }
+.iphone__w-ico { width: 15px; height: 15px; }
+.iphone__w--app { display: flex; flex-direction: column; gap: 2px; height: auto; }
+.iphone__app { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .2); }
+.iphone__app .ico { width: 16px; height: 8px; }
+.iphone__w--app i { font-style: normal; font-size: 7px; font-weight: 600; }
+
+.iphone__dock { position: absolute; left: 22px; right: 22px; bottom: 18px; display: flex; justify-content: space-between; }
 .iphone__round {
-  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-  background: rgba(18, 18, 32, .45); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(30, 32, 50, .42); border: .5px solid rgba(255, 255, 255, .16);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-.iphone__round .ico { width: 15px; height: 15px; }
-.iphone__home { position: absolute; bottom: 6px; left: 50%; width: 36%; height: 4px; transform: translateX(-50%); border-radius: 2px; background: rgba(255, 255, 255, .88); }
+.iphone__round .ico { width: 13px; height: 13px; }
+.iphone__home { position: absolute; bottom: 5px; left: 50%; width: 36%; height: 3.5px; transform: translateX(-50%); border-radius: 2px; background: rgba(255, 255, 255, .92); }
 .iphone__glare {
   position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(118deg, rgba(255, 255, 255, .11) 0%, rgba(255, 255, 255, .03) 26%, transparent 40%);
+  background: linear-gradient(118deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, .02) 26%, transparent 40%);
 }
 
 /* Спинка: матовое стекло, приподнятое плато с тремя камерами */

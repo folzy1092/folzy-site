@@ -142,6 +142,9 @@
     setLink(artist, t && artistHref(t));
 
     setProgress(t);
+    document.dispatchEvent(new CustomEvent('folzy:now', {
+      detail: { track: t, position: () => (progress ? Math.min(progress.dur, progress.pos + (performance.now() - progress.at) / 1000) : 0) },
+    }));
 
     const last = data.last;
     const lastEl = $('#now-last');
@@ -157,6 +160,9 @@
     const strip = $('#strip-music');
     strip.textContent = t ? `${t.artist} — ${t.title}` : 'Сейчас ничего не играет';
     strip.closest('.strip__item').classList.toggle('is-live', Boolean(t));
+    const stripIco = $('#strip-music-ico');
+    stripIco.style.backgroundImage = t ? bg(t.cover) : '';
+    stripIco.classList.toggle('has-cover', Boolean(t && t.cover));
 
     // экран айфона: виджет плеера только пока трек играет, как на настоящем экране блокировки
     $('#iphone-np').hidden = !t;

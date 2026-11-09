@@ -269,3 +269,15 @@ test('бот: точная длина трека попадает в кэш дл
   await push(env, { playing: true, track: { title: 'Zombie', artist: 'cowboyclicker', duration: 131, position: 1, at: Date.now() / 1000 } });
   assert.equal(await env.CACHE.get('dur2:cowboyclicker|zombie'), '131');
 });
+
+test('онлайн: вкладки считаются, ушедшие и мусорные id — нет', async () => {
+  const env = { NOW: fakeNow() };
+  const hit = async (body) => (await worker.fetch(new Request('https://w/presence', { method: 'POST', body: JSON.stringify(body) }), env, {})).json();
+  assert.equal((await hit({ id: 'aaaaaaaa1' })).online, 1);
+  assert.equal((await hit({ id: 'bbbbbbbb2' })).online, 2);
+  assert.equal((await hit({ id: 'aaaaaaaa1' })).online, 2);
+  assert.equal((await hit({ id: 'BAD id!' })).online, 2);
+  assert.equal((await hit({ id: 'aaaaaaaa1', leave: true })).online, 1);
+  const res = await worker.fetch(new Request('https://w/presence'), env, {});
+  assert.equal((await res.json()).online, 1);
+});
