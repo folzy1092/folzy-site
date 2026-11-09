@@ -134,32 +134,140 @@
     toast(`${btn.dataset.copyLabel} скопирован`);
   }));
 
-  // ── Фон: глубина. Пятна плавно уходят от курсора (параллакс, как обои на айфоне) ──
-  // Кадры идут, только пока пятна догоняют цель; в покое — ни одного кадра.
-  const ambient = $('#ambient');
-  if (ambient && !reduced && matchMedia('(pointer: fine)').matches) {
-    const layers = [...ambient.children].map((el, k) => ({ el, depth: [36, -28, 22, -18][k] || 20, x: 0, y: 0 }));
-    const target = { x: 0, y: 0 };
-    let raf = 0;
-    const frame = () => {
-      raf = 0;
-      let moving = false;
-      for (const l of layers) {
-        const tx = target.x * l.depth;
-        const ty = target.y * l.depth;
-        l.x += (tx - l.x) * 0.06;
-        l.y += (ty - l.y) * 0.06;
-        if (Math.abs(tx - l.x) + Math.abs(ty - l.y) > 0.2) moving = true;
-        l.el.style.setProperty('--px', `${l.x.toFixed(1)}px`);
-        l.el.style.setProperty('--py', `${l.y.toFixed(1)}px`);
+  // ── Фон: обои + стеклянная линза за курсором (WebGL) ──
+  // Обои затемнены, чтобы читался текст; линза — «капля» Liquid Glass: внутри обои ярче и чуть ближе,
+  // у края — преломление с радужной кромкой и блик. Кадры идут, только пока линза движется.
+  // Без WebGL или на тач-экране — просто картинка (фон canvas в CSS).
+  const fx = $('#fx');
+  const gl = fx && fx.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false });
+  if (gl) {
+    const VS = 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }';
+    const FS = `
+      precision mediump float;
+      uniform vec2 uRes, uImg, uMouse, uHalf;
+      uniform float uOn, uDim;
+      uniform sampler2D uTex;
+      vec2 coverUV(vec2 f) {
+        vec2 uv = f / uRes;
+        float rs = uRes.x / uRes.y, ri = uImg.x / uImg.y;
+        vec2 k = rs > ri ? vec2(1.0, ri / rs) : vec2(rs / ri, 1.0);
+        uv = (uv - 0.5) * k + 0.5;
+        return vec2(uv.x, 1.0 - uv.y);
       }
-      if (moving) raf = requestAnimationFrame(frame);
+      vec3 bg(vec2 f) { return texture2D(uTex, coverUV(f)).rgb; }
+      void main() {
+        vec2 f = gl_FragCoord.xy;
+        vec3 base = bg(f) * uDim;
+        vec2 q = (f - uMouse) / uHalf;
+        float rb = pow(abs(q.x), 4.0) + pow(abs(q.y), 4.0);          // squircle, как у иконок iOS
+        float inside = (1.0 - smoothstep(0.9, 1.0, rb)) * uOn;
+        if (inside < 0.002) { gl_FragColor = vec4(base, 1.0); return; }
+        float edge = smoothstep(0.3, 1.0, rb);
+        vec2 d = f - uMouse;
+        float k = 0.84 - 0.24 * edge;                                  // к краю стекло «стягивает» картинку
+        float ca = 0.014 * edge;                                       // радужная кромка
+        vec3 col = vec3(bg(uMouse + d * (k - ca)).r, bg(uMouse + d * k).g, bg(uMouse + d * (k + ca)).b);
+        vec2 c = uMouse + d * k;
+        vec3 soft = (bg(c + vec2(1.6, 0.0)) + bg(c - vec2(1.6, 0.0)) + bg(c + vec2(0.0, 1.6)) + bg(c - vec2(0.0, 1.6))) * 0.25;
+        col = mix(col, soft, 0.45) * 0.95;
+        float rim = smoothstep(0.6, 0.93, rb) * (1.0 - smoothstep(0.93, 1.0, rb));
+        float light = clamp(0.5 + 0.5 * dot(normalize(q + 0.0001), normalize(vec2(-0.55, 0.85))), 0.0, 1.0);
+        col += rim * (0.12 + 0.5 * light * light);
+        col *= 1.0 - 0.18 * smoothstep(0.2, 1.0, -q.y) * edge;        // лёгкая тень снизу внутри капли
+        gl_FragColor = vec4(mix(base, col, inside), 1.0);
+      }`;
+    const shader = (type, src) => {
+      const sh = gl.createShader(type);
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      return gl.getShaderParameter(sh, gl.COMPILE_STATUS) ? sh : null;
     };
-    addEventListener('pointermove', (e) => {
-      target.x = -(e.clientX / innerWidth - 0.5);
-      target.y = -(e.clientY / innerHeight - 0.5);
-      if (!raf) raf = requestAnimationFrame(frame);
-    }, { passive: true });
+    const vs = shader(gl.VERTEX_SHADER, VS);
+    const fs = shader(gl.FRAGMENT_SHADER, FS);
+    const prog = gl.createProgram();
+    if (vs && fs) {
+      gl.attachShader(prog, vs);
+      gl.attachShader(prog, fs);
+      gl.linkProgram(prog);
+    }
+    if (vs && fs && gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      gl.useProgram(prog);
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(prog, 'p');
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      const u = Object.fromEntries(['uRes', 'uImg', 'uMouse', 'uHalf', 'uOn', 'uDim', 'uTex'].map((n) => [n, gl.getUniformLocation(prog, n)]));
+      const tex = gl.createTexture();
+      const img = new Image();
+      const pointer = !reduced && matchMedia('(pointer: fine)').matches;
+      const m = { x: innerWidth * 0.62, y: innerHeight * 0.38, tx: 0, ty: 0, on: 0, ton: 0, s: 1, ts: 1 };
+      m.tx = m.x; m.ty = m.y;
+      let dpr = 1;
+      let ready = false;
+      let raf = 0;
+      const HALF = 64;
+
+      const draw = () => {
+        if (!ready) return;
+        gl.viewport(0, 0, fx.width, fx.height);
+        gl.uniform2f(u.uRes, fx.width, fx.height);
+        gl.uniform2f(u.uImg, img.naturalWidth, img.naturalHeight);
+        gl.uniform2f(u.uMouse, m.x * dpr, (innerHeight - m.y) * dpr);
+        gl.uniform2f(u.uHalf, HALF * m.s * dpr, HALF * m.s * dpr);
+        gl.uniform1f(u.uOn, m.on);
+        gl.uniform1f(u.uDim, 0.5);
+        gl.uniform1i(u.uTex, 0);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      };
+      const resize = () => {
+        dpr = Math.min(devicePixelRatio || 1, 1.5);
+        fx.width = Math.round(innerWidth * dpr);
+        fx.height = Math.round(innerHeight * dpr);
+        draw();
+      };
+      const frame = () => {
+        raf = 0;
+        m.x += (m.tx - m.x) * 0.2;
+        m.y += (m.ty - m.y) * 0.2;
+        m.on += (m.ton - m.on) * 0.14;
+        m.s += (m.ts - m.s) * 0.18;
+        draw();
+        const moving = Math.abs(m.tx - m.x) + Math.abs(m.ty - m.y) > 0.3 || Math.abs(m.ton - m.on) > 0.005 || Math.abs(m.ts - m.s) > 0.003;
+        if (moving) raf = requestAnimationFrame(frame);
+      };
+      const wake = () => { if (!raf) raf = requestAnimationFrame(frame); };
+
+      img.onload = () => {
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        ready = true;
+        fx.classList.add('is-ready');
+        resize();
+      };
+      img.src = '/assets/media/bg-home.webp';
+      addEventListener('resize', resize);
+      fx.addEventListener('webglcontextlost', () => fx.classList.remove('is-ready'));
+
+      if (pointer) {
+        addEventListener('pointermove', (e) => {
+          if (e.pointerType !== 'mouse') return;
+          if (m.on < 0.02) { m.x = e.clientX; m.y = e.clientY; }
+          m.tx = e.clientX;
+          m.ty = e.clientY;
+          m.ton = 1;
+          wake();
+        }, { passive: true });
+        document.documentElement.addEventListener('pointerleave', () => { m.ton = 0; wake(); });
+        addEventListener('pointerdown', () => { m.ts = 1.3; wake(); }, { passive: true });
+        addEventListener('pointerup', () => { m.ts = 1; wake(); }, { passive: true });
+      }
+    }
   }
 
   // ── Блик на стекле: светлая дуга по кромке идёт за курсором ──

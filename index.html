@@ -14,22 +14,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&text=0123456789%3A&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=16">
-  <script src="/assets/js/config.js?v=16"></script>
-  <script src="/assets/js/site.js?v=16" defer></script>
-  <script src="/assets/js/live.js?v=16" defer></script>
-  <script src="/assets/js/together.js?v=16" defer></script>
+  <link rel="stylesheet" href="/assets/css/site.css?v=18">
+  <script src="/assets/js/config.js?v=18"></script>
+  <script src="/assets/js/site.js?v=18" defer></script>
+  <script src="/assets/js/live.js?v=18" defer></script>
+  <script src="/assets/js/together.js?v=18" defer></script>
 </head>
 <body>
-  <div class="ambient" id="ambient" aria-hidden="true">
-    <i class="ambient__a"></i><i class="ambient__b"></i><i class="ambient__c"></i><i class="ambient__d"></i>
-  </div>
+  <canvas class="fx" id="fx" aria-hidden="true"></canvas>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
-      <filter id="lg-refract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.006 0.009" numOctaves="2" seed="7" result="noise"/>
-        <feGaussianBlur in="noise" stdDeviation="3" result="soft"/>
-        <feDisplacementMap in="SourceGraphic" in2="soft" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+      <filter id="lg-glass" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feImage href="/assets/media/lg-map.png" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map"/>
+        <feDisplacementMap in="SourceGraphic" in2="map" scale="36" xChannelSelector="R" yChannelSelector="G" result="dR"/>
+        <feColorMatrix in="dR" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+        <feDisplacementMap in="SourceGraphic" in2="map" scale="42" xChannelSelector="R" yChannelSelector="G" result="dG"/>
+        <feColorMatrix in="dG" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
+        <feDisplacementMap in="SourceGraphic" in2="map" scale="48" xChannelSelector="R" yChannelSelector="G" result="dB"/>
+        <feColorMatrix in="dB" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+        <feBlend in="r" in2="g" mode="screen" result="rg"/>
+        <feBlend in="rg" in2="b" mode="screen" result="rgb"/>
+        <feGaussianBlur in="rgb" stdDeviation="1.2"/>
       </filter>
       <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
       <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
@@ -373,6 +378,7 @@
                   <span class="iphone__island"></span>
                   <span class="iphone__date" id="iphone-date"></span>
                   <span class="iphone__time" data-clock="lock">--:--</span>
+                  <span class="iphone__fg" aria-hidden="true"></span>
                   <div class="iphone__np" id="iphone-np" hidden>
                     <div class="iphone__np-row">
                       <span class="iphone__np-cover" id="iphone-np-cover"></span>
