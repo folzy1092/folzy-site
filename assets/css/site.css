@@ -745,3 +745,13 @@ a.strip__item:hover { background: rgba(255, 255, 255, .05); }
 
 .nav__online { white-space: nowrap; }
 @media (max-width: 720px) { .nav__online { padding: 5px 9px; } .nav__online-text { display: none; } }
+
+/* «Слушать вместе»: кнопка — отдельной строкой под ползунком, плеер — стеклянной полосой с отступом от «До этого» */
+.now__listen { display: inline-flex; margin-top: 18px; align-self: flex-start; }
+.now__player {
+  margin-top: 18px; padding: 8px 10px; border-radius: 16px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+.now__player + .now__last, .now__player[hidden] + .now__last { margin-top: 16px; }
+.now__player[hidden] + .now__last { margin-top: 22px; }
