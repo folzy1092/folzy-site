@@ -20,6 +20,7 @@
   // ── Навигация: фон при скролле + плашка под активным разделом ──
   const nav = $('#nav');
   const links = $$('.nav__links a');
+  const tabLinks = $$('.tabbar a');
   const pill = $('.nav__pill');
   const onScroll = () => nav.classList.toggle('is-scrolled', scrollY > 8);
   addEventListener('scroll', onScroll, { passive: true });
@@ -27,6 +28,7 @@
 
   const movePill = (link) => {
     links.forEach((a) => a.classList.toggle('is-active', a === link));
+    tabLinks.forEach((a) => a.classList.toggle('is-active', Boolean(link) && a.getAttribute('href') === link.getAttribute('href')));
     if (!link) { pill.style.opacity = 0; return; }
     pill.style.opacity = 1;
     pill.style.width = `${link.offsetWidth}px`;
